@@ -1,0 +1,8 @@
+project_name        = "al-safa-residence"
+environment         = "production"
+aws_region          = "eu-central-1"
+aws_account_id      = "590184057237"
+cloudflare_zone_id  = "5b4e910343402099233564343a994556"
+# cloudflare_api_token = "your-token-here"  # set via TF_VAR or secrets
+# db_password          = "your-db-password" # set via TF_VAR or secrets
+alert_email         = "admin@stuff187.com"
