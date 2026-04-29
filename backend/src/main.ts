@@ -16,9 +16,24 @@ async function bootstrap() {
     }),
   );
 
+  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') ?? [
+    'https://safa-admin.stuff187.com',
+    'https://safa.stuff187.com',
+    'http://localhost:5173',
+    'http://localhost:3001',
+  ];
   app.enableCors({
-    origin: process.env.ALLOWED_ORIGINS?.split(',') ?? ['https://safa-admin.stuff187.com', 'https://safa.stuff187.com'],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, curl, Swagger)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      // Allow any subdomain of stuff187.com
+      if (origin.endsWith('.stuff187.com')) return callback(null, true);
+      callback(new Error(`CORS: ${origin} not allowed`));
+    },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
   const config = new DocumentBuilder()
