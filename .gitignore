@@ -1,0 +1,55 @@
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Secrets / keys
+*.pem
+*.key
+*.p8
+*.p12
+
+# Terraform / OpenTofu
+*.tfvars
+!*.tfvars.example
+*.tfstate
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+tfplan.out
+
+# Node
+node_modules/
+dist/
+.next/
+.nuxt/
+
+# Flutter / Dart
+.dart_tool/
+build/
+*.g.dart
+*.freezed.dart
+pubspec.lock
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Logs
+*.log
+npm-debug.log*
+
+# Coverage
+coverage/
+lcov.info
