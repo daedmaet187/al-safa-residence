@@ -2,7 +2,7 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 RUN apk add --no-cache openssl openssl-dev
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --include=dev
 COPY . .
 RUN npm run prisma:generate
 RUN npm run build
