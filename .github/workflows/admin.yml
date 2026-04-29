@@ -6,6 +6,7 @@ on:
     paths:
       - 'admin/**'
       - '.github/workflows/admin.yml'
+  workflow_dispatch:
 
 env:
   AWS_REGION: eu-central-1
