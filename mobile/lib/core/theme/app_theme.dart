@@ -91,7 +91,7 @@ abstract class AppTheme {
           borderRadius: BorderRadius.circular(12),
         ),
       ),
-      dialogTheme: DialogThemeData(
+      dialogTheme: DialogTheme(
         backgroundColor:
             isDark ? AppColors.darkSurface : AppColors.surface,
         shape: RoundedRectangleBorder(
@@ -311,8 +311,8 @@ abstract class AppTheme {
 
   // ── Card Theme ─────────────────────────────────────────────────────────────
 
-  static CardThemeData _buildCardTheme(bool isDark) {
-    return CardThemeData(
+  static CardTheme _buildCardTheme(bool isDark) {
+    return CardTheme(
       color: isDark ? AppColors.darkSurface : AppColors.surface,
       elevation: 0,
       shape: RoundedRectangleBorder(
