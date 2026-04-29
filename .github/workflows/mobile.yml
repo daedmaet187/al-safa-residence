@@ -46,12 +46,41 @@ jobs:
       - name: Install dependencies
         run: cd mobile && flutter pub get
 
-      - name: Build release APK
-        run: cd mobile && flutter build apk --release
+      - name: Generate launcher icons (placeholder)
+        run: |
+          mkdir -p mobile/android/app/src/main/res/mipmap-hdpi
+          mkdir -p mobile/android/app/src/main/res/mipmap-mdpi
+          mkdir -p mobile/android/app/src/main/res/mipmap-xhdpi
+          mkdir -p mobile/android/app/src/main/res/mipmap-xxhdpi
+          mkdir -p mobile/android/app/src/main/res/mipmap-xxxhdpi
+          # Copy placeholder icons from Flutter default
+          cp $(flutter --version 2>/dev/null; find /opt/hostedtoolcache/flutter -name ic_launcher.png 2>/dev/null | head -1) \
+            mobile/android/app/src/main/res/mipmap-hdpi/ic_launcher.png 2>/dev/null || \
+          python3 -c "
+          import struct, zlib
+          def make_png(w,h):
+            raw = b'\x00' + b'\x8b\x1a\x8b' * w
+            raw = b''.join([b'\x00' + b'\x8b\x1a\x8b' * w for _ in range(h)])
+            def chunk(t,d): c=zlib.crc32(t+d)&0xffffffff; return struct.pack('>I',len(d))+t+d+struct.pack('>I',c)
+            data = b'\x89PNG\r\n\x1a\n'
+            data += chunk(b'IHDR', struct.pack('>IIBBBBB',w,h,8,2,0,0,0))
+            rows = b''.join(b'\x00'+b'\x8b\x1a\x8b'*w for _ in range(h))
+            data += chunk(b'IDAT', zlib.compress(rows))
+            data += chunk(b'IEND', b'')
+            return data
+          sizes={'mipmap-mdpi':48,'mipmap-hdpi':72,'mipmap-xhdpi':96,'mipmap-xxhdpi':144,'mipmap-xxxhdpi':192}
+          import os
+          for d,s in sizes.items():
+            os.makedirs(f'mobile/android/app/src/main/res/{d}',exist_ok=True)
+            open(f'mobile/android/app/src/main/res/{d}/ic_launcher.png','wb').write(make_png(s,s))
+          "
+
+      - name: Build debug APK
+        run: cd mobile && flutter build apk --debug
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: al-safa-residence-${{ github.sha }}.apk
-          path: mobile/build/app/outputs/flutter-apk/app-release.apk
+          path: mobile/build/app/outputs/flutter-apk/app-debug.apk
           retention-days: 30
