@@ -1,0 +1,158 @@
+name: Backend CI/CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend.yml'
+
+env:
+  AWS_REGION: eu-central-1
+  ECR_REGISTRY: 590184057237.dkr.ecr.eu-central-1.amazonaws.com
+  ECR_REPOSITORY: al-safa-residence-api
+  ECS_CLUSTER: al-safa-residence-production
+  ECS_SERVICE: al-safa-residence-production-api
+  TASK_FAMILY: al-safa-residence-production-api
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: cd backend && npm ci
+
+      - name: Run tests
+        run: cd backend && npm test
+
+  build-and-deploy:
+    name: Build & Deploy
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push Docker image
+        run: |
+          ECR_URL=${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}
+          docker build \
+            -t $ECR_URL:${{ github.sha }} \
+            -t $ECR_URL:latest \
+            ./backend
+          docker push $ECR_URL:${{ github.sha }}
+          docker push $ECR_URL:latest
+
+      - name: Register migration task definition
+        id: migrate-task-def
+        env:
+          ECR_IMAGE: ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+        run: |
+          cat > migrate-task-def.json << EOF
+          {
+            "family": "al-safa-residence-production-migrate",
+            "requiresCompatibilities": ["FARGATE"],
+            "networkMode": "awsvpc",
+            "cpu": "256",
+            "memory": "512",
+            "executionRoleArn": "arn:aws:iam::590184057237:role/al-safa-residence-production-ecs-task-execution",
+            "taskRoleArn": "arn:aws:iam::590184057237:role/al-safa-residence-production-ecs-task-execution",
+            "containerDefinitions": [{
+              "name": "migrate",
+              "image": "${ECR_IMAGE}",
+              "command": ["npx", "prisma", "migrate", "deploy"],
+              "essential": true,
+              "secrets": [{
+                "name": "DATABASE_URL",
+                "valueFrom": "arn:aws:secretsmanager:eu-central-1:590184057237:secret:/al-safa-residence/production/app-3giW8l:DATABASE_URL::"
+              }],
+              "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                  "awslogs-group": "/ecs/al-safa-residence-production-api",
+                  "awslogs-region": "eu-central-1",
+                  "awslogs-stream-prefix": "migrate"
+                }
+              }
+            }]
+          }
+          EOF
+          TASK_DEF_ARN=$(aws ecs register-task-definition \
+            --cli-input-json file://migrate-task-def.json \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+          echo "task_def_arn=$TASK_DEF_ARN" >> $GITHUB_OUTPUT
+
+      - name: Run database migrations
+        run: |
+          TASK_ARN=$(aws ecs run-task \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --task-definition ${{ steps.migrate-task-def.outputs.task_def_arn }} \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[subnet-080f6051dc09d7b0a,subnet-061e38c5ff878c18a],securityGroups=[sg-09b4736e7f7285c41],assignPublicIp=DISABLED}" \
+            --query 'tasks[0].taskArn' \
+            --output text)
+          echo "Running migration task: $TASK_ARN"
+          aws ecs wait tasks-stopped \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --tasks "$TASK_ARN"
+          EXIT_CODE=$(aws ecs describe-tasks \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --tasks "$TASK_ARN" \
+            --query 'tasks[0].containers[0].exitCode' \
+            --output text)
+          echo "Migration exit code: $EXIT_CODE"
+          [ "$EXIT_CODE" = "0" ] || { echo "Migration failed with exit code: $EXIT_CODE"; exit 1; }
+
+      - name: Download current task definition
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition ${{ env.TASK_FAMILY }} \
+            --query 'taskDefinition' \
+            --output json > task-definition.json
+
+      - name: Render new task definition with updated image
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: api
+          image: ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+
+      - name: Create ECS service if not exists
+        run: |
+          aws ecs create-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service-name ${{ env.ECS_SERVICE }} \
+            --task-definition ${{ env.TASK_FAMILY }} \
+            --desired-count 1 \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[subnet-080f6051dc09d7b0a,subnet-061e38c5ff878c18a],securityGroups=[sg-09b4736e7f7285c41],assignPublicIp=DISABLED}" \
+            --load-balancers "targetGroupArn=arn:aws:elasticloadbalancing:eu-central-1:590184057237:targetgroup/alsafa-prod-api-tg/5ec00e8b16828719,containerName=api,containerPort=3000" \
+            || echo "Service already exists, skipping creation"
+
+      - name: Deploy to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true

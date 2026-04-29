@@ -1,0 +1,57 @@
+name: Admin Dashboard CI/CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'admin/**'
+      - '.github/workflows/admin.yml'
+
+env:
+  AWS_REGION: eu-central-1
+  S3_BUCKET: al-safa-residence-admin-590184057237
+  CF_DOMAIN: safa-admin.stuff187.com
+
+jobs:
+  build-and-deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: admin/package-lock.json
+
+      - name: Install dependencies
+        run: cd admin && npm ci
+
+      - name: Build
+        run: cd admin && npm run build
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Sync to S3
+        run: |
+          aws s3 sync admin/dist/ s3://${{ env.S3_BUCKET }} --delete
+
+      - name: Invalidate CloudFront cache
+        run: |
+          CF_DIST_ID=$(aws cloudfront list-distributions \
+            --query "DistributionList.Items[?contains(Aliases.Items, '${{ env.CF_DOMAIN }}')].Id" \
+            --output text)
+          if [ -n "$CF_DIST_ID" ]; then
+            echo "Invalidating CloudFront distribution: $CF_DIST_ID"
+            aws cloudfront create-invalidation \
+              --distribution-id "$CF_DIST_ID" \
+              --paths "/*"
+          else
+            echo "No CloudFront distribution found for ${{ env.CF_DOMAIN }}, skipping invalidation"
+          fi
