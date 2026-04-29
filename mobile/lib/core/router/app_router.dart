@@ -36,8 +36,9 @@ final routerProvider = Provider<GoRouter>((ref) {
     debugLogDiagnostics: false,
     redirect: (context, state) async {
       final token = await storage.getAuthToken();
-      final publicRoutes = ['/login', '/onboarding', '/otp', '/biometric', '/security/login', '/'];
-      final isPublic = publicRoutes.any((r) => state.matchedLocation.startsWith(r));
+      const publicRoutes = ['/login', '/onboarding', '/otp', '/biometric', '/security/login'];
+      final loc = state.matchedLocation;
+      final isPublic = loc == '/' || publicRoutes.any((r) => loc.startsWith(r));
       if (token == null && !isPublic) return '/login';
       return null;
     },
