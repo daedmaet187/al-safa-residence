@@ -87,7 +87,7 @@ export class PaymentsController {
   @Post('autopay')
   @ApiOperation({ summary: 'Configure autopay' })
   @ApiResponse({ status: HttpStatus.CREATED, description: 'Autopay configured' })
-  async configureAutopay(@Body(ValidationPipe) dto: AutopayDto) {
-    return this.paymentsService.configureAutopay(dto);
+  async configureAutopay(@Body(ValidationPipe) dto: AutopayDto, @User() user: any) {
+    return this.paymentsService.configureAutopay(dto, user.id);
   }
 }

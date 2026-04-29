@@ -15,6 +15,7 @@ import {
 import { UploadsService } from './uploads.service';
 import { PresignedUrlDto } from './dto/presigned-url.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { User } from '../common/decorators/user.decorator';
 
 @ApiTags('uploads')
 @ApiBearerAuth()
@@ -32,13 +33,13 @@ export class UploadsController {
       properties: {
         url: { type: 'string' },
         key: { type: 'string' },
-        bucket: { type: 'string' },
         expiresIn: { type: 'number' },
       },
     },
   })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid content type or key' })
-  async getPresignedUrl(@Body(ValidationPipe) dto: PresignedUrlDto) {
-    return this.uploadsService.getPresignedUrl(dto);
+  @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Key prefix not allowed for this user' })
+  async getPresignedUrl(@Body(ValidationPipe) dto: PresignedUrlDto, @User() user: any) {
+    return this.uploadsService.getPresignedUrl(dto, user);
   }
 }

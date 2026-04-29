@@ -16,7 +16,10 @@ async function bootstrap() {
     }),
   );
 
-  app.enableCors();
+  app.enableCors({
+    origin: process.env.ALLOWED_ORIGINS?.split(',') ?? ['https://safa-admin.stuff187.com', 'https://safa.stuff187.com'],
+    credentials: true,
+  });
 
   const config = new DocumentBuilder()
     .setTitle('Al-Safa Residence API')

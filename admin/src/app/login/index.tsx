@@ -26,10 +26,14 @@ export default function LoginPage() {
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (values: LoginValues) => {
-      const { data } = await api.post('/auth/admin/login', values)
+      const { data } = await api.post('/auth/login', values)
       return data
     },
     onSuccess: (data) => {
+      if (data.user?.role !== 'ADMIN') {
+        toast.error('Access denied. Admin credentials required.')
+        return
+      }
       setToken(data.accessToken)
       navigate({ to: '/' })
     },

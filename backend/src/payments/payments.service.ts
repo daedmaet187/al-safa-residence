@@ -113,7 +113,7 @@ export class PaymentsService {
     return { count, data };
   }
 
-  async configureAutopay(dto: any) {
-    return { message: 'Autopay configuration saved', ...dto };
+  async configureAutopay(dto: any, userId: string) {
+    return { message: 'Autopay configuration saved', userId, ...dto };
   }
 }

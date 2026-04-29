@@ -10,6 +10,7 @@ import {
   UseGuards,
   HttpStatus,
   ValidationPipe,
+  ForbiddenException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -23,10 +24,12 @@ import { Role } from '@prisma/client';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UserResponseDto } from './dto/user-response.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { User } from '../common/decorators/user.decorator';
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -64,16 +67,27 @@ export class UsersController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get user by ID' })
+  @ApiOperation({ summary: 'Get user by ID (admin: any user, resident: own record only)' })
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
   @ApiResponse({ status: HttpStatus.OK, type: UserResponseDto })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'User not found' })
-  async findOne(@Param('id') id: string) {
+  async findOne(@Param('id') id: string, @User() user: any) {
+    if (user.role !== Role.ADMIN && id !== user.id) {
+      throw new ForbiddenException();
+    }
     return this.usersService.findOne(id);
   }
 
+  @Patch('me')
+  @ApiOperation({ summary: 'Update own profile (name and phone only)' })
+  @ApiResponse({ status: HttpStatus.OK, type: UserResponseDto })
+  async updateMe(@User() user: any, @Body(ValidationPipe) dto: UpdateProfileDto) {
+    return this.usersService.update(user.id, { name: dto.name, phone: dto.phone });
+  }
+
   @Patch(':id')
-  @ApiOperation({ summary: 'Update user by ID' })
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: 'Update user by ID (admin only)' })
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
   @ApiResponse({ status: HttpStatus.OK, type: UserResponseDto })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'User not found' })

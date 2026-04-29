@@ -5,8 +5,8 @@ export default () => ({
     url: process.env.DATABASE_URL,
   },
   jwt: {
-    accessSecret: process.env.JWT_ACCESS_SECRET || 'access-secret',
-    refreshSecret: process.env.JWT_REFRESH_SECRET || 'refresh-secret',
+    accessSecret: process.env.JWT_ACCESS_SECRET ?? (() => { throw new Error('JWT_ACCESS_SECRET is required'); })(),
+    refreshSecret: process.env.JWT_REFRESH_SECRET ?? (() => { throw new Error('JWT_REFRESH_SECRET is required'); })(),
     accessExpiry: process.env.JWT_ACCESS_EXPIRY || '15m',
     refreshExpiry: process.env.JWT_REFRESH_EXPIRY || '7d',
   },

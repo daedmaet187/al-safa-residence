@@ -26,12 +26,21 @@ import '../../features/security/screens/security_home_screen.dart';
 import '../../features/security/screens/security_login_screen.dart';
 import '../../features/security/screens/qr_scan_screen.dart';
 import '../../features/security/screens/visitor_log_screen.dart';
+import '../storage/secure_storage.dart';
 import '../theme/app_colors.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
+  final storage = ref.read(secureStorageProvider);
   return GoRouter(
     initialLocation: '/',
     debugLogDiagnostics: false,
+    redirect: (context, state) async {
+      final token = await storage.getAuthToken();
+      final publicRoutes = ['/login', '/onboarding', '/otp', '/biometric', '/security/login', '/'];
+      final isPublic = publicRoutes.any((r) => state.matchedLocation.startsWith(r));
+      if (token == null && !isPublic) return '/login';
+      return null;
+    },
     routes: [
       // ── Splash ──────────────────────────────────────────────────────────────
       GoRoute(

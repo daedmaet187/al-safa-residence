@@ -104,6 +104,9 @@ export class GuestsService {
     if (pass.status === GuestPassStatus.REVOKED) {
       result = 'DENIED';
       reason = 'Pass has been revoked';
+    } else if (pass.status === GuestPassStatus.USED) {
+      result = 'DENIED';
+      reason = 'Pass has already been used';
     } else if (pass.status === GuestPassStatus.EXPIRED) {
       result = 'DENIED';
       reason = 'Pass has expired';
