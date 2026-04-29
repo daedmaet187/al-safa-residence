@@ -85,6 +85,10 @@ jobs:
                 "name": "DATABASE_URL",
                 "valueFrom": "arn:aws:secretsmanager:eu-central-1:590184057237:secret:/al-safa-residence/production/app-3giW8l:DATABASE_URL::"
               }],
+              "environment": [{
+                "name": "NODE_TLS_REJECT_UNAUTHORIZED",
+                "value": "0"
+              }],
               "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
