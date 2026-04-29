@@ -1,0 +1,136 @@
+{
+  "colors": {
+    "light": {
+      "primary": "#1B3A6B",
+      "primary-light": "#EEF2F8",
+      "secondary": "#2D5EA8",
+      "accent": "#C9A96E",
+      "accent-light": "#F5ECD9",
+      "accent-dark": "#B8924A",
+      "bg": "#F5F6F8",
+      "surface": "#FFFFFF",
+      "surface-raised": "#FFFFFF",
+      "border": "rgba(0,0,0,0.06)",
+      "divider": "rgba(0,0,0,0.06)",
+      "sidebar": "#0F1F3D",
+      "text": "#111827",
+      "text-muted": "#6B7280",
+      "text-subtle": "#9CA3AF",
+      "text-on-primary": "#FFFFFF",
+      "text-on-accent": "#FFFFFF",
+      "success": "#16A34A",
+      "success-light": "#DCFCE7",
+      "warning": "#D97706",
+      "warning-light": "#FEF9C3",
+      "danger": "#DC2626",
+      "danger-light": "#FEE2E2",
+      "gate-approved": "#16A34A",
+      "gate-guest": "#1D4ED8",
+      "gate-denied": "#DC2626",
+      "gate-blacklist": "#7F1D1D",
+      "gate-waiting": "#D97706"
+    },
+    "dark": {
+      "primary": "#3B6CC9",
+      "primary-light": "#1A2B4A",
+      "secondary": "#4A80D4",
+      "accent": "#D4AF7A",
+      "accent-light": "#2A1F0A",
+      "accent-dark": "#C9A96E",
+      "bg": "#0B0D10",
+      "surface": "#111827",
+      "surface-raised": "#1F2937",
+      "border": "rgba(255,255,255,0.08)",
+      "divider": "rgba(255,255,255,0.08)",
+      "sidebar": "#060810",
+      "text": "#F9FAFB",
+      "text-muted": "#9CA3AF",
+      "text-subtle": "#6B7280",
+      "text-on-primary": "#FFFFFF",
+      "text-on-accent": "#111827",
+      "success": "#22C55E",
+      "success-light": "#052E16",
+      "warning": "#FBBF24",
+      "warning-light": "#2D1D06",
+      "danger": "#F87171",
+      "danger-light": "#2D0707",
+      "gate-approved": "#22C55E",
+      "gate-guest": "#60A5FA",
+      "gate-denied": "#F87171",
+      "gate-blacklist": "#FCA5A5",
+      "gate-waiting": "#FBBF24"
+    }
+  },
+  "typography": {
+    "fontFamily": {
+      "sans": "'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+      "mono": "'JetBrains Mono', 'Fira Code', monospace"
+    },
+    "scale": {
+      "xs": "0.75rem",
+      "sm": "0.875rem",
+      "base": "1rem",
+      "lg": "1.125rem",
+      "xl": "1.25rem",
+      "2xl": "1.5rem",
+      "3xl": "1.875rem",
+      "4xl": "2.25rem",
+      "5xl": "3rem"
+    },
+    "weight": {
+      "regular": 400,
+      "medium": 500,
+      "semibold": 600,
+      "bold": 700,
+      "extrabold": 800
+    },
+    "lineHeight": {
+      "tight": 1.25,
+      "snug": 1.375,
+      "normal": 1.5,
+      "relaxed": 1.625
+    },
+    "letterSpacing": {
+      "tight": "-0.025em",
+      "normal": "0",
+      "wide": "0.025em",
+      "wider": "0.05em",
+      "widest": "0.1em"
+    }
+  },
+  "spacing": {
+    "0": "0",
+    "1": "4px",
+    "2": "8px",
+    "3": "12px",
+    "4": "16px",
+    "5": "20px",
+    "6": "24px",
+    "7": "28px",
+    "8": "32px",
+    "10": "40px",
+    "12": "48px",
+    "16": "64px",
+    "20": "80px",
+    "24": "96px"
+  },
+  "radius": {
+    "none": "0",
+    "sm": "6px",
+    "md": "12px",
+    "lg": "16px",
+    "xl": "20px",
+    "2xl": "24px",
+    "full": "9999px"
+  },
+  "shadows": {
+    "none": "none",
+    "sm": "0 1px 2px rgba(0,0,0,0.05)",
+    "md": "0 4px 12px rgba(0,0,0,0.08)",
+    "lg": "0 8px 24px rgba(0,0,0,0.12)",
+    "xl": "0 16px 40px rgba(0,0,0,0.16)",
+    "card": "0 2px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
+    "card-hover": "0 8px 24px rgba(27,58,107,0.12), 0 2px 6px rgba(0,0,0,0.06)",
+    "gold": "0 4px 16px rgba(201,169,110,0.30)"
+  }
+}
