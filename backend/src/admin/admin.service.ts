@@ -3,6 +3,18 @@ import * as bcrypt from 'bcrypt';
 import { BillStatus, MaintenanceStatus, Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
+// Helper: wrap paginated responses in the shape the dashboard expects
+function paginate<T>(data: T[], count: number, skip: number, take: number) {
+  return {
+    data,
+    total: count,
+    count,  // keep for backward compat
+    page: Math.floor(skip / take) + 1,
+    limit: take,
+    totalPages: Math.ceil(count / take),
+  };
+}
+
 @Injectable()
 export class AdminService {
   constructor(private readonly prisma: PrismaService) {}
@@ -71,10 +83,12 @@ export class AdminService {
       this.prisma.user.count({ where }),
     ]);
 
-    return {
-      count,
-      data: data.map((u) => ({ ...u, units: u.unitAssignments.map((a) => a.unit) })),
-    };
+    const mapped = data.map((u) => ({
+      ...u,
+      status: u.isActive ? 'active' : 'inactive',
+      units: u.unitAssignments.map((a) => a.unit),
+    }));
+    return paginate(mapped, count, skip, take);
   }
 
   // ── Units ──────────────────────────────────────────────────────────────────
@@ -88,13 +102,24 @@ export class AdminService {
         include: {
           assignments: {
             where: { endDate: null },
-            include: { user: { select: { id: true, name: true, email: true } } },
+            include: { user: { select: { id: true, name: true, email: true, phone: true } } },
           },
         },
       }),
       this.prisma.unit.count(),
     ]);
-    return { count, data };
+    // Map assignments → residents (dashboard expects unit.residents[])
+    const mapped = data.map((u) => ({
+      ...u,
+      status: u.assignments.length > 0 ? 'occupied' : 'vacant',
+      residents: u.assignments.map((a) => ({
+        id: a.user.id,
+        name: a.user.name,
+        email: a.user.email,
+        role: 'resident',
+      })),
+    }));
+    return paginate(mapped, count, skip, take);
   }
 
   // ── Announcements ──────────────────────────────────────────────────────────
@@ -109,7 +134,7 @@ export class AdminService {
       }),
       this.prisma.announcement.count({ where: { deletedAt: null } }),
     ]);
-    return { count, data };
+    return paginate(data, count, skip, take);
   }
 
   async createAnnouncement(dto: { title: string; body: string; isImportant?: boolean; expiresAt?: string }) {
@@ -156,13 +181,22 @@ export class AdminService {
         take,
         orderBy: { createdAt: 'desc' },
         include: {
-          unit: { select: { number: true, building: true } },
-          user: { select: { id: true, name: true } },
+          unit: { select: { id: true, number: true, building: true } },
+          user: { select: { id: true, name: true, email: true } },
         },
       }),
       this.prisma.maintenanceRequest.count({ where }),
     ]);
-    return { count, data };
+    // Rename user→resident; add submittedAt alias for dashboard
+    const mapped = data.map((r) => ({
+      ...r,
+      resident: { id: r.user.id, name: r.user.name, email: (r.user as any).email, role: 'resident' },
+      submittedAt: r.createdAt,
+      status: r.status.toLowerCase().replace('_', '-') as any,
+      priority: r.priority.toLowerCase() as any,
+      category: r.category.toLowerCase().replace('_', '-') as any,
+    }));
+    return paginate(mapped, count, skip, take);
   }
 
   async updateMaintenanceStatus(id: string, status: string, adminNotes?: string) {
@@ -214,7 +248,14 @@ export class AdminService {
       }),
       this.prisma.bill.count({ where }),
     ]);
-    return { count, data };
+    // Rename user→resident; lowercase status/type for dashboard
+    const mapped = data.map((b) => ({
+      ...b,
+      resident: { id: b.user.id, name: b.user.name, email: b.user.email, role: 'resident' },
+      status: b.status.toLowerCase() as any,
+      type: b.type.toLowerCase().replace('_', '-') as any,
+    }));
+    return paginate(mapped, count, skip, take);
   }
 
   async createBill(dto: { userId: string; unitId: string; type: string; amount: number; currency?: string; dueDate: string; description?: string }) {
@@ -268,7 +309,16 @@ export class AdminService {
       }),
       this.prisma.payment.count(),
     ]);
-    return { count, data };
+    // Shape bill to include resident alias
+    const mapped = data.map((p) => ({
+      ...p,
+      bill: {
+        ...p.bill,
+        resident: { id: p.bill.user.id, name: p.bill.user.name, role: 'resident' },
+        type: p.bill.type.toLowerCase().replace('_', '-'),
+      },
+    }));
+    return paginate(mapped, count, skip, take);
   }
 
   // ── Gate ───────────────────────────────────────────────────────────────────
@@ -279,11 +329,29 @@ export class AdminService {
         skip,
         take,
         orderBy: { createdAt: 'desc' },
-        include: { user: { select: { id: true, name: true, email: true } } },
+        include: {
+          user: {
+            select: {
+              id: true, name: true, email: true,
+              unitAssignments: {
+                where: { endDate: null, isPrimary: true },
+                include: { unit: { select: { id: true, number: true, building: true } } },
+                take: 1,
+              },
+            },
+          },
+        },
       }),
       this.prisma.guestPass.count(),
     ]);
-    return { count, data };
+    // Add resident + unit fields dashboard expects
+    const mapped = data.map((p) => ({
+      ...p,
+      status: p.status.toLowerCase() as any,
+      resident: { id: p.user.id, name: p.user.name, email: p.user.email, role: 'resident' },
+      unit: (p.user as any).unitAssignments?.[0]?.unit ?? null,
+    }));
+    return paginate(mapped, count, skip, take);
   }
 
   async getGateLogs(skip = 0, take = 50) {
@@ -294,13 +362,29 @@ export class AdminService {
         orderBy: { scannedAt: 'desc' },
         include: {
           guestPass: {
-            include: { user: { select: { id: true, name: true } } },
+            include: {
+              user: {
+                select: {
+                  id: true, name: true,
+                  unitAssignments: {
+                    where: { endDate: null, isPrimary: true },
+                    include: { unit: { select: { number: true } } },
+                    take: 1,
+                  },
+                },
+              },
+            },
           },
         },
       }),
       this.prisma.gateLog.count(),
     ]);
-    return { count, data };
+    const mapped = data.map((l) => ({
+      ...l,
+      guestName: l.guestPass.guestName,
+      unit: (l.guestPass.user as any).unitAssignments?.[0]?.unit ?? null,
+    }));
+    return paginate(mapped, count, skip, take);
   }
 
   async revokeGuestPass(id: string) {
@@ -388,7 +472,8 @@ export class AdminService {
       }),
       this.prisma.user.count({ where }),
     ]);
-    return { count, data };
+    const mapped = data.map((u) => ({ ...u, status: u.isActive ? 'active' : 'inactive' }));
+    return paginate(mapped, count, skip, take);
   }
 
   async createStaff(dto: { firstName: string; lastName: string; phone: string; email?: string; password?: string; role: 'ADMIN' | 'SECURITY' }) {
