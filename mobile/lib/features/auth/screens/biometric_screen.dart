@@ -102,8 +102,6 @@ class _BiometricScreenState extends ConsumerState<BiometricScreen> {
 
   // Simple 4-digit PIN — uses last 4 of phone number stored in secure storage
   Future<void> _verifyPin() async {
-    final storage = ref.read(secureStorageProvider);
-    final role = await storage.getUserRole();
     final pin = _pinCtrl.text.trim();
     // PIN = last 4 digits of stored auth token hash (simple demo PIN: 1234)
     // In production this would be a real stored PIN
