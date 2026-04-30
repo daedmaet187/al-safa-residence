@@ -14,13 +14,23 @@ export class MaintenanceService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(dto: CreateMaintenanceDto, userId: string) {
-    const unit = await this.prisma.unit.findUnique({ where: { id: dto.unitId } });
-    if (!unit) throw new NotFoundException(`Unit with ID ${dto.unitId} not found`);
+    // Auto-resolve unitId from user's primary unit if not provided
+    let unitId = dto.unitId;
+    if (!unitId) {
+      const assignment = await this.prisma.unitAssignment.findFirst({
+        where: { userId, endDate: null, isPrimary: true },
+      });
+      if (!assignment) throw new NotFoundException('No unit assigned to your account');
+      unitId = assignment.unitId;
+    }
+    const unit = await this.prisma.unit.findUnique({ where: { id: unitId } });
+    if (!unit) throw new NotFoundException(`Unit with ID ${unitId} not found`);
 
     try {
       return await this.prisma.maintenanceRequest.create({
         data: {
           ...dto,
+          unitId,
           userId,
           photoUrls: dto.photoUrls || [],
         },

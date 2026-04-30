@@ -29,21 +29,36 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     authState.when(
       data: (state) async {
         if (state.status == AuthStatus.authenticated) {
-          if (state.user?.role == 'security' || state.user?.role == 'SECURITY') {
+          final role = state.user?.role ?? '';
+          if (role.toUpperCase() == 'SECURITY') {
             context.go('/security');
           } else {
             context.go('/home');
           }
         } else {
-          // Only show onboarding once; after that go straight to login
           final storage = ref.read(secureStorageProvider);
-          final seen = await storage.getHasSeenOnboarding();
+          final token = await storage.getAuthToken();
           if (!mounted) return;
-          if (seen) {
-            context.go('/login');
+          if (token != null) {
+            // Token exists but /auth/me failed (network issue or token expired)
+            // Go to biometric if set up, otherwise login
+            final hasBio = await storage.getHasBiometricSetup();
+            if (!mounted) return;
+            if (hasBio) {
+              context.go('/biometric');
+            } else {
+              context.go('/login');
+            }
           } else {
-            await storage.setHasSeenOnboarding();
-            context.go('/onboarding');
+            // No token at all — show onboarding or login
+            final seen = await storage.getHasSeenOnboarding();
+            if (!mounted) return;
+            if (seen) {
+              context.go('/login');
+            } else {
+              await storage.setHasSeenOnboarding();
+              context.go('/onboarding');
+            }
           }
         }
       },

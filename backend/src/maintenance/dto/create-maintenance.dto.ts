@@ -10,10 +10,10 @@ import {
 import { MaintenanceCategory, Priority } from '@prisma/client';
 
 export class CreateMaintenanceDto {
-  @ApiProperty({ description: 'Unit ID for this request' })
+  @ApiPropertyOptional({ description: 'Unit ID for this request (auto-resolved from user primary unit if omitted)' })
   @IsUUID()
-  @IsNotEmpty()
-  unitId: string;
+  @IsOptional()
+  unitId?: string;
 
   @ApiProperty({ example: 'Leaking faucet in kitchen' })
   @IsString()

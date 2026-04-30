@@ -131,6 +131,45 @@ export class AuthService {
     return tokens;
   }
 
+  async getMe(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        unitAssignments: {
+          include: { unit: true },
+          where: { endDate: null },
+        },
+      },
+    });
+    if (!user) throw new Error('User not found');
+
+    const units = user.unitAssignments.map((a) => ({
+      id: a.unit.id,
+      number: a.unit.number,
+      floor: a.unit.floor,
+      building: a.unit.building,
+      type: a.unit.type,
+      area: a.unit.area,
+      bedrooms: a.unit.bedrooms,
+      bathrooms: a.unit.bathrooms,
+      parkingSpot: a.unit.parkingSpot,
+      isPrimary: a.isPrimary,
+    }));
+
+    return {
+      user: {
+        id: user.id,
+        phone: user.phone,
+        email: user.email,
+        name: user.name,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+      },
+      units,
+    };
+  }
+
   async logout(refreshToken: string) {
     await this.prisma.refreshToken.deleteMany({ where: { token: refreshToken } });
     return { message: 'Logged out successfully' };

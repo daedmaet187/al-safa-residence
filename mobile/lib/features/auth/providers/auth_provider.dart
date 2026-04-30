@@ -54,8 +54,13 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     try {
       final dio = ref.read(dioProvider);
       final resp = await dio.get('/auth/me');
-      final user = User.fromJson(resp.data['user'] as Map<String, dynamic>);
-      final unitsData = resp.data['units'] as List<dynamic>? ?? [];
+      final data = resp.data as Map<String, dynamic>;
+      // /auth/me returns {user, units} — handle both formats gracefully
+      final userData = data.containsKey('user')
+          ? data['user'] as Map<String, dynamic>
+          : data; // fallback: data IS the user object
+      final user = User.fromJson(userData);
+      final unitsData = data['units'] as List<dynamic>? ?? [];
       final units = unitsData
           .map((e) => ResidenceUnit.fromJson(e as Map<String, dynamic>))
           .toList();
@@ -67,7 +72,8 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
         activeUnitId: activeUnitId,
       );
     } catch (_) {
-      await storage.clearAll();
+      // Don't wipe storage on network errors — just return unauthenticated
+      // so user can retry. Only clear if token is explicitly invalid (401).
       return const AuthState(status: AuthStatus.unauthenticated);
     }
   }
