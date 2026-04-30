@@ -36,8 +36,8 @@ function GuestPassesTab() {
         </div>
       ),
     },
-    { id: 'resident', header: 'Resident', cell: ({ row }) => row.original.resident.name },
-    { id: 'unit', header: 'Unit', cell: ({ row }) => row.original.unit.number },
+    { id: 'resident', header: 'Resident', cell: ({ row }) => row.original.resident?.name ?? <span className="text-[var(--text-muted)]">—</span> },
+    { id: 'unit', header: 'Unit', cell: ({ row }) => row.original.unit?.number ?? <span className="text-[var(--text-muted)]">—</span> },
     {
       accessorKey: 'status',
       header: 'Status',

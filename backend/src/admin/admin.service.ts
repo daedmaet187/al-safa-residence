@@ -192,9 +192,12 @@ export class AdminService {
       ...r,
       resident: { id: r.user.id, name: r.user.name, email: (r.user as any).email, role: 'resident' },
       submittedAt: r.createdAt,
-      status: r.status.toLowerCase() as any,  // in_progress, pending, resolved, cancelled
+      status: r.status.toLowerCase() as any,
       priority: r.priority.toLowerCase() as any,
       category: r.category.toLowerCase() as any,
+      adminNotes: r.notes ?? '',
+      photos: r.photoUrls ?? [],
+      timeline: [],  // reserved for future use
     }));
     return paginate(mapped, count, skip, take);
   }
@@ -204,18 +207,29 @@ export class AdminService {
     if (!record) throw new NotFoundException(`Maintenance request ${id} not found`);
 
     const upperStatus = status ? status.toUpperCase() as MaintenanceStatus : record.status;
-    return this.prisma.maintenanceRequest.update({
+    const updated = await this.prisma.maintenanceRequest.update({
       where: { id },
       data: {
         status: upperStatus,
         resolvedAt: upperStatus === 'RESOLVED' ? new Date() : undefined,
-        ...(adminNotes ? { notes: adminNotes } : {}),
+        ...(adminNotes !== undefined ? { notes: adminNotes } : {}),
       },
       include: {
-        unit: { select: { number: true, building: true } },
-        user: { select: { id: true, name: true } },
+        unit: { select: { id: true, number: true, building: true } },
+        user: { select: { id: true, name: true, email: true } },
       },
     });
+    return {
+      ...updated,
+      resident: { id: updated.user.id, name: updated.user.name, email: (updated.user as any).email, role: 'resident' },
+      submittedAt: updated.createdAt,
+      status: updated.status.toLowerCase(),
+      priority: updated.priority.toLowerCase(),
+      category: updated.category.toLowerCase(),
+      adminNotes: updated.notes ?? '',
+      photos: updated.photoUrls ?? [],
+      timeline: [],
+    };
   }
 
   // ── Bills ──────────────────────────────────────────────────────────────────

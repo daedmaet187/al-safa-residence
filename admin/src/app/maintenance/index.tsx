@@ -77,7 +77,7 @@ function StatusUpdateDialog({ request, open, onClose }: { request: MaintenanceRe
               rows={3}
             />
           </div>
-          {request.timeline.length > 0 && (
+          {(request.timeline ?? []).length > 0 && (
             <div>
               <p className="text-sm font-medium text-[var(--text)] mb-2">Timeline</p>
               <div className="space-y-2">
