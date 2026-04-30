@@ -48,7 +48,7 @@ export class AuthService {
 
   // ── Mobile: send OTP to phone ──────────────────────────────────────────────
   async sendOtp(phone: string) {
-    const user = await this.prisma.user.findUnique({ where: { phone } });
+    const user = await this.prisma.user.findFirst({ where: { phone } });
     if (!user || user.deletedAt || !user.isActive) {
       throw new UnauthorizedException('No account found with this phone number');
     }
@@ -58,7 +58,7 @@ export class AuthService {
 
   // ── Mobile: verify OTP by phone ────────────────────────────────────────────
   async verifyOtp(phone: string, otp: string) {
-    const user = await this.prisma.user.findUnique({
+    const user = await this.prisma.user.findFirst({
       where: { phone },
       include: {
         unitAssignments: {

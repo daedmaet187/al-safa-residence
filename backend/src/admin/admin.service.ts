@@ -318,7 +318,7 @@ export class AdminService {
     nationalId?: string;
     moveInDate?: string;
   }) {
-    const existing = await this.prisma.user.findUnique({ where: { phone: dto.phone } });
+    const existing = await this.prisma.user.findFirst({ where: { phone: dto.phone } });
     if (existing) throw new ConflictException('Phone number already in use');
     if (dto.email) {
       const emailExists = await this.prisma.user.findUnique({ where: { email: dto.email } });
@@ -392,7 +392,7 @@ export class AdminService {
   }
 
   async createStaff(dto: { firstName: string; lastName: string; phone: string; email?: string; password?: string; role: 'ADMIN' | 'SECURITY' }) {
-    const existing = await this.prisma.user.findUnique({ where: { phone: dto.phone } });
+    const existing = await this.prisma.user.findFirst({ where: { phone: dto.phone } });
     if (existing) throw new ConflictException('Phone number already in use');
     if (dto.email) {
       const emailExists = await this.prisma.user.findUnique({ where: { email: dto.email } });
