@@ -64,7 +64,7 @@ class _CreateRequestScreenState extends ConsumerState<CreateRequestScreen> {
         'contentLength': bytes.length,
       });
       final uploadUrl = presignedResp.data['uploadUrl'] as String;
-      final fileUrl = presignedResp.data['key'] as String? ?? key;
+      // fileUrl reserved for future direct key usage
 
       // 2. Upload to S3
       await Dio().put(
