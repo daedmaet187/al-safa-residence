@@ -177,7 +177,7 @@ resource "aws_lb" "main" {
 
 # ALB Target Group
 resource "aws_lb_target_group" "api" {
-  name        = "${local.name_prefix}-api-tg"
+  name        = "alsafa-prod-api-tg"
   port        = 3000
   protocol    = "HTTP"
   vpc_id      = var.vpc_id

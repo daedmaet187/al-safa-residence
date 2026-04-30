@@ -17,10 +17,14 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
+import { Role } from '@prisma/client';
 import { PaymentsService } from './payments.service';
 import { PayBillDto } from './dto/pay-bill.dto';
 import { AutopayDto } from './dto/autopay.dto';
+import { CreateBillDto } from './dto/create-bill.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
 import { User } from '../common/decorators/user.decorator';
 
 @ApiTags('payments')
@@ -29,6 +33,15 @@ import { User } from '../common/decorators/user.decorator';
 @Controller('payments')
 export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
+
+  @Post('bills')
+  @Roles(Role.ADMIN)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiOperation({ summary: 'Create a bill (admin only)' })
+  @ApiResponse({ status: HttpStatus.CREATED, description: 'Bill created' })
+  async createBill(@Body(ValidationPipe) dto: CreateBillDto) {
+    return this.paymentsService.createBill(dto);
+  }
 
   @Get('bills')
   @ApiOperation({ summary: 'List bills (resident: own, admin: all)' })

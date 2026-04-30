@@ -36,6 +36,7 @@ export class AuthService {
 
     return {
       ...tokens,
+      requiresOtp: true,
       user: { id: user.id, email: user.email, name: user.name, role: user.role },
     };
   }

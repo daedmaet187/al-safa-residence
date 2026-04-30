@@ -1,3 +1,12 @@
+terraform {
+  required_providers {
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 4.0"
+    }
+  }
+}
+
 # API: CNAME → ALB (proxied: false — SSL terminates at ALB)
 resource "cloudflare_record" "api" {
   zone_id = var.cloudflare_zone_id
