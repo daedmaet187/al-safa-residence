@@ -24,21 +24,27 @@ class GateScanResult {
   });
 
   factory GateScanResult.fromJson(Map<String, dynamic> json) {
-    final statusStr = json['status'] as String? ?? 'unknown';
+    // Backend returns 'result' field (APPROVED/DENIED/EXPIRED), not 'status'
+    final raw = (json['result'] as String? ?? json['status'] as String? ?? 'unknown').toLowerCase();
     final status = {
       'approved': ScanResultStatus.approved,
       'denied': ScanResultStatus.denied,
       'expired': ScanResultStatus.expired,
-    }[statusStr] ??
+    }[raw] ??
         ScanResultStatus.unknown;
 
     return GateScanResult(
       status: status,
       guestName: json['guestName'] as String?,
-      residentName: json['residentName'] as String?,
-      unitNumber: json['unitNumber'] as String?,
+      residentName: (json['residentName'] as String?) ??
+          (json['resident'] as Map?)?['name'] as String?,
+      unitNumber: (json['unitNumber'] as String?) ??
+          ((json['resident'] as Map?)?['unitAssignments'] as List?)?.isNotEmpty == true
+              ? (((json['resident'] as Map)['unitAssignments'] as List)[0]
+                      as Map)['unit']?['number'] as String?
+              : null,
       validUntil: json['validUntil'] as String?,
-      message: json['message'] as String?,
+      message: (json['reason'] as String?) ?? (json['message'] as String?),
       scannedAt: DateTime.now(),
     );
   }
@@ -60,18 +66,24 @@ class VisitorLogEntry {
   });
 
   factory VisitorLogEntry.fromJson(Map<String, dynamic> json) {
-    final statusStr = json['status'] as String? ?? 'unknown';
+    final resultStr = (json['result'] as String? ?? json['status'] as String? ?? 'unknown').toLowerCase();
     final status = {
       'approved': ScanResultStatus.approved,
       'denied': ScanResultStatus.denied,
       'expired': ScanResultStatus.expired,
-    }[statusStr] ??
+    }[resultStr] ??
         ScanResultStatus.unknown;
+
+    // Backend nests guest info under guestPass
+    final guestPass = json['guestPass'] as Map<String, dynamic>?;
+    final guestName = (json['guestName'] as String?) ??
+        guestPass?['guestName'] as String? ?? 'Unknown';
+    final unitNumber = (json['unitNumber'] as String?) ?? '';
 
     return VisitorLogEntry(
       id: json['id'] as String,
-      guestName: json['guestName'] as String? ?? 'Unknown',
-      unitNumber: json['unitNumber'] as String? ?? '',
+      guestName: guestName,
+      unitNumber: unitNumber,
       status: status,
       scannedAt: DateTime.parse(json['scannedAt'] as String),
     );
@@ -81,8 +93,16 @@ class VisitorLogEntry {
 final visitorLogProvider =
     FutureProvider<List<VisitorLogEntry>>((ref) async {
   final dio = ref.watch(dioProvider);
-  final response = await dio.get('/gate/log');
-  final list = response.data as List<dynamic>;
+  final response = await dio.get('/guests/log');
+  final raw = response.data;
+  final List<dynamic> list;
+  if (raw is Map<String, dynamic> && raw.containsKey('data')) {
+    list = raw['data'] as List<dynamic>;
+  } else if (raw is List<dynamic>) {
+    list = raw;
+  } else {
+    list = [];
+  }
   return list
       .map((e) => VisitorLogEntry.fromJson(e as Map<String, dynamic>))
       .toList();
@@ -95,7 +115,7 @@ class ScanNotifier extends StateNotifier<GateScanResult?> {
   Future<void> scan(String qrCode) async {
     final dio = _ref.read(dioProvider);
     try {
-      final response = await dio.post('/gate/scan', data: {'qrCode': qrCode});
+      final response = await dio.post('/guests/scan', data: {'qrCode': qrCode});
       state = GateScanResult.fromJson(response.data as Map<String, dynamic>);
       _ref.invalidate(visitorLogProvider);
     } catch (_) {
