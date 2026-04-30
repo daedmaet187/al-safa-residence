@@ -2,6 +2,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/dio_client.dart';
 import '../../../core/storage/secure_storage.dart';
 
+String? _extractUnitNumber(Map<String, dynamic> json) {
+  try {
+    final resident = json['resident'] as Map<String, dynamic>?;
+    if (resident == null) return null;
+    final assignments = resident['unitAssignments'] as List<dynamic>?;
+    if (assignments == null || assignments.isEmpty) return null;
+    final unit = (assignments[0] as Map<String, dynamic>)['unit'] as Map<String, dynamic>?;
+    return unit?['number'] as String?;
+  } catch (_) {
+    return null;
+  }
+}
+
 enum ScanResultStatus { approved, denied, expired, unknown }
 
 class GateScanResult {
@@ -37,12 +50,8 @@ class GateScanResult {
       status: status,
       guestName: json['guestName'] as String?,
       residentName: (json['residentName'] as String?) ??
-          (json['resident'] as Map?)?['name'] as String?,
-      unitNumber: (json['unitNumber'] as String?) ??
-          ((json['resident'] as Map?)?['unitAssignments'] as List?)?.isNotEmpty == true
-              ? (((json['resident'] as Map)['unitAssignments'] as List)[0]
-                      as Map)['unit']?['number'] as String?
-              : null,
+          ((json['resident'] as Map?)?['name']) as String?,
+      unitNumber: (json['unitNumber'] as String?) ?? _extractUnitNumber(json),
       validUntil: json['validUntil'] as String?,
       message: (json['reason'] as String?) ?? (json['message'] as String?),
       scannedAt: DateTime.now(),
