@@ -224,8 +224,12 @@ export class AdminController {
 
   @Patch('staff/:id')
   @ApiOperation({ summary: 'Update staff member' })
-  updateStaff(@Param('id') id: string, @Body() dto: { role?: string; isActive?: boolean }) {
-    return this.adminService.updateStaff(id, dto);
+  updateStaff(@Param('id') id: string, @Body() dto: { role?: string; isActive?: boolean; status?: string }) {
+    const patch: { role?: string; isActive?: boolean } = {};
+    if (dto.role !== undefined) patch.role = dto.role;
+    if (dto.isActive !== undefined) patch.isActive = dto.isActive;
+    if (dto.status !== undefined) patch.isActive = dto.status === 'active';
+    return this.adminService.updateStaff(id, patch);
   }
 
   // ── Reports ────────────────────────────────────────────────────────────────
@@ -254,14 +258,5 @@ export class AdminController {
     return this.adminService.getGateReport();
   }
 
-  @Patch('staff/:id')
-  @ApiOperation({ summary: 'Update staff member' })
-  updateStaffById(@Param('id') id: string, @Body() dto: { role?: string; isActive?: boolean; status?: string }) {
-    // normalise status→isActive for dashboard compat
-    const patch: { role?: string; isActive?: boolean } = {};
-    if (dto.role !== undefined) patch.role = dto.role;
-    if (dto.isActive !== undefined) patch.isActive = dto.isActive;
-    if (dto.status !== undefined) patch.isActive = dto.status === 'active';
-    return this.adminService.updateStaff(id, patch);
-  }
 }
+

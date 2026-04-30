@@ -25,13 +25,17 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { User } from '../common/decorators/user.decorator';
+import { ResidentService } from '../resident/resident.service';
 
 @ApiTags('units')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('units')
 export class UnitsController {
-  constructor(private readonly unitsService: UnitsService) {}
+  constructor(
+    private readonly unitsService: UnitsService,
+    private readonly residentService: ResidentService,
+  ) {}
 
   @Post()
   @Roles(Role.ADMIN)
@@ -46,6 +50,12 @@ export class UnitsController {
   @ApiResponse({ status: HttpStatus.OK, description: 'List of units' })
   async findAll(@User() user: any) {
     return this.unitsService.findAll(user.id, user.role);
+  }
+
+  @Get('my-unit')
+  @ApiOperation({ summary: 'Get resident unit detail with stats (mobile)' })
+  async getMyUnit(@User() user: any) {
+    return this.residentService.getMyUnit(user.id);
   }
 
   @Get(':id')
