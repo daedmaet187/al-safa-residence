@@ -283,7 +283,7 @@ class HomeScreen extends ConsumerWidget {
                       SectionHeader(
                         title: 'Announcements',
                         action: 'See all',
-                        onAction: () => context.go('/home/community'),
+                        onAction: () => context.push('/home/community'),
                       ),
                       const SizedBox(height: 12),
                       ...summary.recentAnnouncements.map((a) =>

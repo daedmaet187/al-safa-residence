@@ -14,25 +14,11 @@ class CommunityScreen extends ConsumerWidget {
     final announcementsAsync = ref.watch(announcementsProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
-        if (!didPop) {
-          if (context.canPop()) {
-            context.pop();
-          } else {
-            context.go('/home');
-          }
-        }
-      },
-      child: DefaultTabController(
+    return DefaultTabController(
       length: 2,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Community'),
-          leading: Navigator.canPop(context)
-              ? const BackButton()
-              : null,
           automaticallyImplyLeading: true,
           bottom: TabBar(
             tabs: const [
@@ -96,7 +82,6 @@ class CommunityScreen extends ConsumerWidget {
           ],
         ),
       ),
-    ),
     );
   }
 }
