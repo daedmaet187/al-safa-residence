@@ -14,10 +14,11 @@ export function formatDate(date: string | Date, opts?: Intl.DateTimeFormatOption
   }).format(new Date(date))
 }
 
-export function formatCurrency(amount: number, currency = 'IQD') {
+export function formatCurrency(amount: number, currency?: string) {
+  const cur = currency ?? (typeof window !== 'undefined' ? (localStorage.getItem('alsafa_currency') ?? 'IQD') : 'IQD')
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency,
+    currency: cur,
     minimumFractionDigits: 0,
   }).format(amount)
 }

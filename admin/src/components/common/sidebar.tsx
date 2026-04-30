@@ -13,6 +13,8 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { clearToken } from '@/lib/axios'
+import { CurrencySelector } from './currency-selector'
+import { DarkModeToggle } from './dark-mode-toggle'
 
 const navItems = [
   { href: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -43,6 +45,10 @@ export function Sidebar() {
           <span className="gold-gradient-text font-extrabold">Admin</span>
         </div>
         <div className="text-white/40 text-xs mt-0.5">Property Management</div>
+        <div className="flex items-center gap-2 mt-3">
+          <CurrencySelector />
+          <DarkModeToggle />
+        </div>
       </div>
 
       {/* Navigation */}
