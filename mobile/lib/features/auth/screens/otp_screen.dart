@@ -85,8 +85,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                 ),),
               const SizedBox(height: 24),
               Text('Enter OTP',
-                      style: Theme.of(context).textTheme.headlineMedium)
-                  .slideY(begin: 0.2),
+                      style: Theme.of(context).textTheme.headlineMedium),
               const SizedBox(height: 8),
               Text(
                 'We sent a 6-digit code to\n${widget.phone}',
