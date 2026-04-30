@@ -47,5 +47,12 @@ class SecureStorageService {
   Future<void> setHasBiometricSetup() =>
       _storage.write(key: _kHasBiometricSetup, value: 'true');
 
-  Future<void> clearAll() => _storage.deleteAll();
+  Future<void> clearAll() async {
+    // Preserve onboarding + biometric flags across logouts
+    final seen = await _storage.read(key: _kHasSeenOnboarding);
+    final bio = await _storage.read(key: _kHasBiometricSetup);
+    await _storage.deleteAll();
+    if (seen != null) await _storage.write(key: _kHasSeenOnboarding, value: seen);
+    if (bio != null) await _storage.write(key: _kHasBiometricSetup, value: bio);
+  }
 }

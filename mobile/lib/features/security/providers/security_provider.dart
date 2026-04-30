@@ -115,31 +115,33 @@ final scanNotifierProvider =
   (ref) => ScanNotifier(ref),
 );
 
-// Security login
+// Security login — phone OTP flow (same as resident)
 class SecurityAuthNotifier extends AsyncNotifier<bool> {
   @override
   Future<bool> build() async {
     final storage = ref.read(secureStorageProvider);
     final role = await storage.getUserRole();
-    return role == 'security';
+    return role == 'SECURITY' || role == 'security';
   }
 
-  Future<void> login({
-    required String email,
-    required String password,
-  }) async {
+  Future<void> sendOtp({required String phone}) async {
+    final dio = ref.read(dioProvider);
+    await dio.post('/auth/send-otp', data: {'phone': phone});
+  }
+
+  Future<void> verifyOtp({required String phone, required String otp}) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final dio = ref.read(dioProvider);
       final storage = ref.read(secureStorageProvider);
-      final resp = await dio.post('/auth/login', data: {
-        'email': email,
-        'password': password,
-        'role': 'security',
-      });
+      final resp = await dio.post('/auth/verify-otp', data: {'phone': phone, 'otp': otp});
+      final role = resp.data['role'] as String? ?? 'SECURITY';
+      if (role.toUpperCase() != 'SECURITY') {
+        throw Exception('This number is not a security guard account');
+      }
       final token = resp.data['accessToken'] as String;
       await storage.setAuthToken(token);
-      await storage.setUserRole('security');
+      await storage.setUserRole(role);
       return true;
     });
   }

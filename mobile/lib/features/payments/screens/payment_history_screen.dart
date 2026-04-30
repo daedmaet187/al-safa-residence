@@ -11,7 +11,7 @@ class PaymentHistoryScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final historyAsync = ref.watch(paymentHistoryProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final currencyFmt = NumberFormat.currency(symbol: 'AED ', decimalDigits: 2);
+    final currencyFmt = NumberFormat.currency(symbol: 'IQD ', decimalDigits: 0);
     final dateFmt = DateFormat('dd MMM yyyy');
 
     return Scaffold(

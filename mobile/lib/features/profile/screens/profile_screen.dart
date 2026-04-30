@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/theme_provider.dart';
 import '../providers/profile_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 
@@ -104,6 +106,23 @@ class ProfileScreen extends ConsumerWidget {
             title: 'ID Documents',
             onTap: () {},
           ),
+          Consumer(builder: (ctx, ref, _) {
+            final themeMode = ref.watch(themeModeProvider);
+            final isDarkNow = themeMode == ThemeMode.dark ||
+                (themeMode == ThemeMode.system &&
+                    MediaQuery.platformBrightnessOf(ctx) == Brightness.dark);
+            return ListTile(
+              leading: Icon(isDarkNow ? Icons.light_mode_rounded : Icons.dark_mode_rounded),
+              title: Text(isDarkNow ? 'Switch to Light Mode' : 'Switch to Dark Mode',
+                  style: Theme.of(ctx).textTheme.titleSmall),
+              trailing: Switch(
+                value: isDarkNow,
+                onChanged: (_) => ref.read(themeModeProvider.notifier).toggleDarkLight(),
+                activeColor: AppColors.accent,
+              ),
+              onTap: () => ref.read(themeModeProvider.notifier).toggleDarkLight(),
+            );
+          }),
           _SectionTile(
             icon: Icons.help_outline_rounded,
             title: 'Help & Support',

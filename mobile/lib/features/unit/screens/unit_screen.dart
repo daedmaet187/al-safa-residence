@@ -10,7 +10,7 @@ class UnitScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final unitAsync = ref.watch(unitDetailProvider);
-    final currencyFmt = NumberFormat.currency(symbol: 'AED ', decimalDigits: 0);
+    final currencyFmt = NumberFormat.currency(symbol: 'IQD ', decimalDigits: 0);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(

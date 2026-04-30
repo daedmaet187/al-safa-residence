@@ -75,7 +75,7 @@ class _BillCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currencyFmt =
-        NumberFormat.currency(symbol: 'AED ', decimalDigits: 2);
+        NumberFormat.currency(symbol: 'IQD ', decimalDigits: 0);
     final dateFmt = DateFormat('dd MMM yyyy');
 
     Color borderColor =
