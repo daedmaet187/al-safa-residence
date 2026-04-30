@@ -8,8 +8,8 @@ import '../../../shared/widgets/gold_button.dart';
 import '../providers/auth_provider.dart';
 
 class OtpScreen extends ConsumerStatefulWidget {
-  const OtpScreen({super.key, required this.email});
-  final String email;
+  const OtpScreen({super.key, required this.phone});
+  final String phone;
 
   @override
   ConsumerState<OtpScreen> createState() => _OtpScreenState();
@@ -40,7 +40,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
     setState(() => _isLoading = true);
     try {
       await ref.read(authProvider.notifier).verifyOtp(
-            email: widget.email,
+            phone: widget.phone,
             otp: _otpCode,
           );
       if (!mounted) return;
@@ -94,7 +94,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                   .slideY(begin: 0.2),
               const SizedBox(height: 8),
               Text(
-                'We sent a 6-digit code to\n${widget.email}',
+                'We sent a 6-digit code to\n${widget.phone}',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: isDark
                         ? AppColors.darkTextMuted

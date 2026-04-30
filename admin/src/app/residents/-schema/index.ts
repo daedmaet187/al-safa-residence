@@ -1,19 +1,22 @@
 import { z } from 'zod'
 
 export const createResidentSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email('Invalid email'),
-  phone: z.string().min(7, 'Invalid phone number'),
-  role: z.enum(['resident', 'admin', 'security']),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  firstName: z.string().min(2, 'First name required'),
+  lastName: z.string().min(2, 'Last name required'),
+  phone: z.string().min(7, 'Valid phone number required'),
+  email: z.string().email('Invalid email').optional().or(z.literal('')),
+  unitId: z.string().optional(),
+  nationalId: z.string().optional(),
+  moveInDate: z.string().optional(),
 })
 
 export const updateResidentSchema = z.object({
-  name: z.string().min(2).optional(),
-  email: z.string().email().optional(),
+  firstName: z.string().min(2).optional(),
+  lastName: z.string().min(2).optional(),
   phone: z.string().min(7).optional(),
-  role: z.enum(['resident', 'admin', 'security']).optional(),
+  email: z.string().email().optional(),
   status: z.enum(['active', 'inactive', 'suspended', 'pending']).optional(),
+  isActive: z.boolean().optional(),
 })
 
 export type CreateResidentValues = z.infer<typeof createResidentSchema>

@@ -72,27 +72,20 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     }
   }
 
-  Future<Map<String, dynamic>> login({
-    required String email,
-    required String password,
-  }) async {
+  Future<void> sendOtp({required String phone}) async {
     final dio = ref.read(dioProvider);
-    final resp = await dio.post('/auth/login', data: {
-      'email': email,
-      'password': password,
-    });
-    return resp.data as Map<String, dynamic>;
+    await dio.post('/auth/send-otp', data: {'phone': phone});
   }
 
   Future<void> verifyOtp({
-    required String email,
+    required String phone,
     required String otp,
   }) async {
     final dio = ref.read(dioProvider);
     final storage = ref.read(secureStorageProvider);
 
     final resp = await dio.post('/auth/verify-otp', data: {
-      'email': email,
+      'phone': phone,
       'otp': otp,
     });
 

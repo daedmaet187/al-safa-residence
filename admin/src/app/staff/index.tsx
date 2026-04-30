@@ -31,10 +31,12 @@ import type { StaffMember } from '@/types'
 import { useStaffList, useCreateStaff, useUpdateStaff } from './-components/service'
 
 const createStaffSchema = z.object({
-  name: z.string().min(2),
-  email: z.string().email(),
-  role: z.enum(['admin', 'security']),
-  password: z.string().min(8),
+  firstName: z.string().min(2, 'First name required'),
+  lastName: z.string().min(2, 'Last name required'),
+  phone: z.string().min(7, 'Phone required'),
+  email: z.string().email('Invalid email').optional().or(z.literal('')),
+  role: z.enum(['ADMIN', 'SECURITY']),
+  password: z.string().min(8, 'Password required for Admin role').optional().or(z.literal('')),
 })
 type CreateStaffValues = z.infer<typeof createStaffSchema>
 
@@ -43,7 +45,7 @@ function CreateStaffDialog() {
   const { mutate, isPending } = useCreateStaff()
   const form = useForm<CreateStaffValues>({
     resolver: zodResolver(createStaffSchema),
-    defaultValues: { name: '', email: '', role: 'security', password: '' },
+    defaultValues: { firstName: '', lastName: '', phone: '', email: '', role: 'SECURITY', password: '' },
   })
 
   return (
@@ -59,17 +61,25 @@ function CreateStaffDialog() {
             className="space-y-4"
           >
             <div className="grid grid-cols-2 gap-4">
-              <FormField control={form.control} name="name" render={({ field }) => (
-                <FormItem className="col-span-2">
-                  <FormLabel>Full Name</FormLabel>
-                  <FormControl><Input placeholder="Ahmad Al-Hassan" {...field} /></FormControl>
+              <FormField control={form.control} name="firstName" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>First Name <span className="text-red-500">*</span></FormLabel>
+                  <FormControl><Input placeholder="Khaled" {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
-              <FormField control={form.control} name="email" render={({ field }) => (
+              <FormField control={form.control} name="lastName" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl><Input type="email" placeholder="a@alsafa.com" {...field} /></FormControl>
+                  <FormLabel>Last Name <span className="text-red-500">*</span></FormLabel>
+                  <FormControl><Input placeholder="Al-Amin" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <FormField control={form.control} name="phone" render={({ field }) => (
+                <FormItem className="col-span-2">
+                  <FormLabel>Phone Number <span className="text-red-500">*</span></FormLabel>
+                  <FormControl><Input placeholder="+964 770 123 4567" {...field} /></FormControl>
+                  <p className="text-xs text-muted-foreground">Used for OTP login on mobile.</p>
                   <FormMessage />
                 </FormItem>
               )} />
@@ -79,17 +89,24 @@ function CreateStaffDialog() {
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                     <SelectContent>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="security">Security</SelectItem>
+                      <SelectItem value="ADMIN">Admin</SelectItem>
+                      <SelectItem value="SECURITY">Security</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
                 </FormItem>
               )} />
+              <FormField control={form.control} name="email" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl><Input type="email" placeholder="staff@alsafa.com" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
               <FormField control={form.control} name="password" render={({ field }) => (
                 <FormItem className="col-span-2">
-                  <FormLabel>Password</FormLabel>
-                  <FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl>
+                  <FormLabel>Password <span className="text-muted-foreground font-normal">(Admin only)</span></FormLabel>
+                  <FormControl><Input type="password" placeholder="Required for Admin dashboard login" {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )} />

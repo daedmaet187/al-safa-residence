@@ -16,15 +16,12 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailCtrl = TextEditingController();
-  final _passwordCtrl = TextEditingController();
-  bool _obscurePassword = true;
+  final _phoneCtrl = TextEditingController();
   bool _isLoading = false;
 
   @override
   void dispose() {
-    _emailCtrl.dispose();
-    _passwordCtrl.dispose();
+    _phoneCtrl.dispose();
     super.dispose();
   }
 
@@ -32,20 +29,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
     try {
-      final result = await ref.read(authProvider.notifier).login(
-            email: _emailCtrl.text.trim(),
-            password: _passwordCtrl.text,
-          );
+      await ref.read(authProvider.notifier).sendOtp(phone: _phoneCtrl.text.trim());
       if (!mounted) return;
-      // Navigate to OTP screen with email
-      context.push('/otp', extra: {
-        'email': _emailCtrl.text.trim(),
-        'requiresOtp': result['requiresOtp'] as bool? ?? true,
-      });
+      context.push('/otp', extra: {'phone': _phoneCtrl.text.trim()});
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Login failed: ${e.toString()}')),
+        SnackBar(
+          content: Text(
+            e.toString().contains('No account')
+                ? 'No account found with this number. Contact your building admin.'
+                : 'Something went wrong. Try again.',
+          ),
+          backgroundColor: AppColors.danger,
+        ),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -72,12 +69,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       curve: Curves.easeOutBack),
               const SizedBox(height: 32),
               Text(
-                'Welcome back',
+                'Welcome',
                 style: Theme.of(context).textTheme.displaySmall,
               ).animate(delay: 100.ms).fadeIn().slideY(begin: 0.2),
               const SizedBox(height: 6),
               Text(
-                'Sign in to manage your residence',
+                'Enter your phone number to receive a verification code',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: isDark
                         ? AppColors.darkTextMuted
@@ -89,52 +86,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 child: Column(
                   children: [
                     TextFormField(
-                      controller: _emailCtrl,
-                      keyboardType: TextInputType.emailAddress,
-                      textInputAction: TextInputAction.next,
+                      controller: _phoneCtrl,
+                      keyboardType: TextInputType.phone,
+                      textInputAction: TextInputAction.done,
+                      onFieldSubmitted: (_) => _submit(),
                       decoration: const InputDecoration(
-                        labelText: 'Email address',
-                        prefixIcon: Icon(Icons.email_outlined),
+                        labelText: 'Phone number',
+                        hintText: '+964 770 123 4567',
+                        prefixIcon: Icon(Icons.phone_outlined),
                       ),
                       validator: (v) {
-                        if (v == null || v.isEmpty) return 'Enter your email';
-                        if (!v.contains('@')) return 'Enter a valid email';
+                        if (v == null || v.trim().isEmpty) return 'Enter your phone number';
+                        if (v.trim().length < 7) return 'Enter a valid phone number';
                         return null;
                       },
                     ).animate(delay: 200.ms).fadeIn().slideY(begin: 0.15),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _passwordCtrl,
-                      obscureText: _obscurePassword,
-                      textInputAction: TextInputAction.done,
-                      onFieldSubmitted: (_) => _submit(),
-                      decoration: InputDecoration(
-                        labelText: 'Password',
-                        prefixIcon: const Icon(Icons.lock_outline_rounded),
-                        suffixIcon: IconButton(
-                          icon: Icon(_obscurePassword
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined),
-                          onPressed: () => setState(
-                              () => _obscurePassword = !_obscurePassword),
-                        ),
-                      ),
-                      validator: (v) {
-                        if (v == null || v.isEmpty) return 'Enter your password';
-                        return null;
-                      },
-                    ).animate(delay: 250.ms).fadeIn().slideY(begin: 0.15),
-                    const SizedBox(height: 8),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: () {},
-                        child: const Text('Forgot password?'),
-                      ),
-                    ),
                     const SizedBox(height: 24),
                     GoldButton(
-                      label: 'Sign In',
+                      label: 'Send Code',
                       icon: Icons.arrow_forward_rounded,
                       isLoading: _isLoading,
                       onPressed: _submit,

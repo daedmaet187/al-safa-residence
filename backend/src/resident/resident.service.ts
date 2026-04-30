@@ -274,20 +274,27 @@ export class ResidentService {
   async getProfile(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, name: true, email: true, phone: true, role: true, createdAt: true },
+      select: { id: true, firstName: true, lastName: true, name: true, email: true, phone: true, role: true, createdAt: true },
     });
     if (!user) throw new NotFoundException('User not found');
     return user;
   }
 
-  async updateProfile(userId: string, dto: { name?: string; phone?: string }) {
+  async updateProfile(userId: string, dto: { firstName?: string; lastName?: string; name?: string; phone?: string; email?: string }) {
+    const data: any = {};
+    if (dto.firstName !== undefined) data.firstName = dto.firstName;
+    if (dto.lastName !== undefined) data.lastName = dto.lastName;
+    if (dto.firstName || dto.lastName) {
+      const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { firstName: true, lastName: true } });
+      data.name = `${dto.firstName ?? user!.firstName} ${dto.lastName ?? user!.lastName}`.trim();
+    }
+    if (dto.name !== undefined) data.name = dto.name;
+    if (dto.phone !== undefined) data.phone = dto.phone;
+    if (dto.email !== undefined) data.email = dto.email;
     return this.prisma.user.update({
       where: { id: userId },
-      data: {
-        ...(dto.name ? { name: dto.name } : {}),
-        ...(dto.phone !== undefined ? { phone: dto.phone } : {}),
-      },
-      select: { id: true, name: true, email: true, phone: true, role: true, createdAt: true },
+      data,
+      select: { id: true, firstName: true, lastName: true, name: true, email: true, phone: true, role: true, createdAt: true },
     });
   }
 

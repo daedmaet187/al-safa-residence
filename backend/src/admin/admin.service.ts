@@ -309,16 +309,42 @@ export class AdminService {
     return this.prisma.guestPass.update({ where: { id }, data: { status: 'REVOKED' } });
   }
 
-  async createResident(dto: { name: string; email: string; phone?: string; password: string; unitId?: string }) {
-    const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
-    if (existing) throw new ConflictException('Email already in use');
-    const passwordHash = await bcrypt.hash(dto.password, 10);
+  async createResident(dto: {
+    firstName: string;
+    lastName: string;
+    phone: string;
+    email?: string;
+    unitId?: string;
+    nationalId?: string;
+    moveInDate?: string;
+  }) {
+    const existing = await this.prisma.user.findUnique({ where: { phone: dto.phone } });
+    if (existing) throw new ConflictException('Phone number already in use');
+    if (dto.email) {
+      const emailExists = await this.prisma.user.findUnique({ where: { email: dto.email } });
+      if (emailExists) throw new ConflictException('Email already in use');
+    }
+    const fullName = `${dto.firstName} ${dto.lastName}`.trim();
     const user = await this.prisma.user.create({
-      data: { name: dto.name, email: dto.email, passwordHash, phone: dto.phone, role: Role.RESIDENT },
-      select: { id: true, name: true, email: true, phone: true, role: true, isActive: true, createdAt: true },
+      data: {
+        firstName: dto.firstName,
+        lastName: dto.lastName,
+        name: fullName,
+        phone: dto.phone,
+        email: dto.email ?? null,
+        role: Role.RESIDENT,
+      },
+      select: { id: true, firstName: true, lastName: true, name: true, email: true, phone: true, role: true, isActive: true, createdAt: true },
     });
     if (dto.unitId) {
-      await this.prisma.unitAssignment.create({ data: { userId: user.id, unitId: dto.unitId, isPrimary: true } });
+      await this.prisma.unitAssignment.create({
+        data: {
+          userId: user.id,
+          unitId: dto.unitId,
+          isPrimary: true,
+          startDate: dto.moveInDate ? new Date(dto.moveInDate) : new Date(),
+        },
+      });
     }
     return user;
   }
@@ -365,19 +391,29 @@ export class AdminService {
     return { count, data };
   }
 
-  async createStaff(dto: { name: string; email: string; password: string; role: 'ADMIN' | 'SECURITY' }) {
-    const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
-    if (existing) throw new ConflictException('Email already in use');
-
-    const passwordHash = await bcrypt.hash(dto.password, 10);
+  async createStaff(dto: { firstName: string; lastName: string; phone: string; email?: string; password?: string; role: 'ADMIN' | 'SECURITY' }) {
+    const existing = await this.prisma.user.findUnique({ where: { phone: dto.phone } });
+    if (existing) throw new ConflictException('Phone number already in use');
+    if (dto.email) {
+      const emailExists = await this.prisma.user.findUnique({ where: { email: dto.email } });
+      if (emailExists) throw new ConflictException('Email already in use');
+    }
+    // ADMIN role requires email+password for dashboard login; SECURITY uses phone OTP only
+    const passwordHash = (dto.role === 'ADMIN' && dto.password)
+      ? await bcrypt.hash(dto.password, 10)
+      : null;
+    const fullName = `${dto.firstName} ${dto.lastName}`.trim();
     return this.prisma.user.create({
       data: {
-        name: dto.name,
-        email: dto.email,
+        firstName: dto.firstName,
+        lastName: dto.lastName,
+        name: fullName,
+        phone: dto.phone,
+        email: dto.email ?? null,
         passwordHash,
         role: dto.role as Role,
       },
-      select: { id: true, name: true, email: true, phone: true, role: true, isActive: true, createdAt: true },
+      select: { id: true, firstName: true, lastName: true, name: true, email: true, phone: true, role: true, isActive: true, createdAt: true },
     });
   }
 

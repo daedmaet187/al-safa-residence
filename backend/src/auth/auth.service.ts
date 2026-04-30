@@ -1,14 +1,14 @@
 import {
   Injectable,
   UnauthorizedException,
-  BadRequestException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
-import { v4 as uuidv4 } from 'uuid';
 import { PrismaService } from '../prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
+
+const DEFAULT_OTP = '123456';
 
 @Injectable()
 export class AuthService {
@@ -18,6 +18,7 @@ export class AuthService {
     private configService: ConfigService,
   ) {}
 
+  // ── Admin dashboard login (email + password) ───────────────────────────────
   async login(dto: LoginDto) {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
@@ -27,17 +28,82 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    if (!user.passwordHash) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
     const passwordValid = await bcrypt.compare(dto.password, user.passwordHash);
     if (!passwordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const tokens = await this.generateTokens(user.id, user.email, user.role);
+    const tokens = await this.generateTokens(user.id, user.email ?? user.phone, user.role);
 
     return {
       ...tokens,
-      requiresOtp: true,
+      requiresOtp: false,
       user: { id: user.id, email: user.email, name: user.name, role: user.role },
+    };
+  }
+
+  // ── Mobile: send OTP to phone ──────────────────────────────────────────────
+  async sendOtp(phone: string) {
+    const user = await this.prisma.user.findUnique({ where: { phone } });
+    if (!user || user.deletedAt || !user.isActive) {
+      throw new UnauthorizedException('No account found with this phone number');
+    }
+    // TODO: integrate SMS provider here — for now OTP is always 123456
+    return { message: 'OTP sent', phone };
+  }
+
+  // ── Mobile: verify OTP by phone ────────────────────────────────────────────
+  async verifyOtp(phone: string, otp: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { phone },
+      include: {
+        unitAssignments: {
+          include: { unit: true },
+          where: { endDate: null },
+        },
+      },
+    });
+
+    if (!user || user.deletedAt || !user.isActive) {
+      throw new UnauthorizedException('No account found with this phone number');
+    }
+
+    if (otp !== DEFAULT_OTP) {
+      throw new UnauthorizedException('Invalid OTP');
+    }
+
+    const tokens = await this.generateTokens(user.id, user.email ?? user.phone, user.role);
+
+    const units = user.unitAssignments.map((a) => ({
+      id: a.unit.id,
+      number: a.unit.number,
+      floor: a.unit.floor,
+      building: a.unit.building,
+      type: a.unit.type,
+      area: a.unit.area,
+      bedrooms: a.unit.bedrooms,
+      bathrooms: a.unit.bathrooms,
+      parkingSpot: a.unit.parkingSpot,
+      isPrimary: a.isPrimary,
+    }));
+
+    return {
+      ...tokens,
+      role: user.role,
+      user: {
+        id: user.id,
+        phone: user.phone,
+        email: user.email,
+        name: user.name,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+      },
+      units,
     };
   }
 
@@ -65,67 +131,13 @@ export class AuthService {
     return tokens;
   }
 
-  async sendOtp(email: string) {
-    // Stub: OTP sending not implemented yet
-    const user = await this.prisma.user.findUnique({ where: { email } });
-    if (!user || user.deletedAt || !user.isActive) {
-      throw new UnauthorizedException('User not found');
-    }
-    return { message: 'OTP sent' };
-  }
-
-  async verifyOtp(email: string, otp: string) {
-    // Default OTP for development/testing
-    const DEFAULT_OTP = '123456';
-
-    const user = await this.prisma.user.findUnique({
-      where: { email },
-      include: {
-        unitAssignments: {
-          include: { unit: true },
-          where: { endDate: null },
-        },
-      },
-    });
-
-    if (!user || user.deletedAt || !user.isActive) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    if (otp !== DEFAULT_OTP) {
-      throw new UnauthorizedException('Invalid OTP');
-    }
-
-    const tokens = await this.generateTokens(user.id, user.email, user.role);
-
-    const units = user.unitAssignments.map((a) => ({
-      id: a.unit.id,
-      number: a.unit.number,
-      floor: a.unit.floor,
-      building: a.unit.building,
-      type: a.unit.type,
-      area: a.unit.area,
-      bedrooms: a.unit.bedrooms,
-      bathrooms: a.unit.bathrooms,
-      parkingSpot: a.unit.parkingSpot,
-      isPrimary: a.isPrimary,
-    }));
-
-    return {
-      ...tokens,
-      role: user.role,
-      user: { id: user.id, email: user.email, name: user.name, role: user.role },
-      units,
-    };
-  }
-
   async logout(refreshToken: string) {
     await this.prisma.refreshToken.deleteMany({ where: { token: refreshToken } });
     return { message: 'Logged out successfully' };
   }
 
-  private async generateTokens(userId: string, email: string, role: string) {
-    const payload = { sub: userId, email, role };
+  private async generateTokens(userId: string, emailOrPhone: string, role: string) {
+    const payload = { sub: userId, email: emailOrPhone, role };
 
     const accessToken = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('jwt.accessSecret'),

@@ -54,9 +54,9 @@ export class AdminController {
   }
 
   @Post('residents')
-  @ApiOperation({ summary: 'Create resident' })
+  @ApiOperation({ summary: 'Create resident (phone-based, no password)' })
   createResident(
-    @Body() dto: { name: string; email: string; phone?: string; password: string; unitId?: string },
+    @Body() dto: { firstName: string; lastName: string; phone: string; email?: string; unitId?: string; nationalId?: string; moveInDate?: string },
   ) {
     return this.adminService.createResident(dto);
   }
@@ -215,9 +215,9 @@ export class AdminController {
   }
 
   @Post('staff')
-  @ApiOperation({ summary: 'Create staff member' })
+  @ApiOperation({ summary: 'Create staff/security (phone OTP login; ADMIN role also needs email+password)' })
   createStaff(
-    @Body() dto: { name: string; email: string; password: string; role: 'ADMIN' | 'SECURITY' },
+    @Body() dto: { firstName: string; lastName: string; phone: string; email?: string; password?: string; role: 'ADMIN' | 'SECURITY' },
   ) {
     return this.adminService.createStaff(dto);
   }

@@ -62,8 +62,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/otp',
         builder: (context, state) {
           final extra = state.extra as Map<String, dynamic>? ?? {};
-          final email = extra['email'] as String? ?? '';
-          return OtpScreen(email: email);
+          final phone = extra['phone'] as String? ?? '';
+          return OtpScreen(phone: phone);
         },
       ),
       GoRoute(

@@ -9,10 +9,12 @@ datasource db {
 
 model User {
   id           String    @id @default(uuid())
-  email        String    @unique
+  email        String?   @unique
+  firstName    String    @default("")
+  lastName     String    @default("")
   name         String
-  phone        String?
-  passwordHash String
+  phone        String    @unique
+  passwordHash String?
   role         Role      @default(RESIDENT)
   isActive     Boolean   @default(true)
   createdAt    DateTime  @default(now())
