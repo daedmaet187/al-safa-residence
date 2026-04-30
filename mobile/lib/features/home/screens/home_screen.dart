@@ -9,7 +9,6 @@ import '../../../shared/models/announcement.dart';
 import '../providers/home_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../community/providers/community_provider.dart';
-import '../../../shared/models/announcement.dart' as ann_model;
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
