@@ -6,18 +6,18 @@ import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/gold_button.dart';
 import '../providers/maintenance_provider.dart';
 
-const _categories = [
-  'Plumbing',
-  'Electrical',
-  'HVAC / AC',
-  'Appliances',
-  'Painting',
-  'Flooring',
-  'Door / Window',
-  'Common Area',
-  'Parking',
-  'Other',
-];
+// Keys are backend enum values; values are display labels
+const _categoryMap = {
+  'PLUMBING': 'Plumbing',
+  'ELECTRICAL': 'Electrical',
+  'AC_HVAC': 'HVAC / AC',
+  'APPLIANCE': 'Appliances',
+  'CLEANING': 'Cleaning',
+  'PEST_CONTROL': 'Pest Control',
+  'STRUCTURAL': 'Structural',
+  'OTHER': 'Other',
+};
+final _categories = _categoryMap.keys.toList();
 
 class CreateRequestScreen extends ConsumerStatefulWidget {
   const CreateRequestScreen({super.key});
@@ -153,7 +153,10 @@ class _CreateRequestScreenState extends ConsumerState<CreateRequestScreen> {
                   prefixIcon: Icon(Icons.category_outlined),
                 ),
                 items: _categories
-                    .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                    .map((c) => DropdownMenuItem(
+                          value: c,
+                          child: Text(_categoryMap[c] ?? c),
+                        ))
                     .toList(),
                 onChanged: (v) {
                   if (v != null) setState(() => _category = v);

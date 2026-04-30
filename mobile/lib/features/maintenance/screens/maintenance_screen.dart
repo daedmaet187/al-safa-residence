@@ -135,7 +135,7 @@ class _RequestCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
-                          request.category,
+                          request.categoryLabel,
                           style: Theme.of(context)
                               .textTheme
                               .labelSmall

@@ -2,10 +2,22 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/dio_client.dart';
 import '../../auth/providers/auth_provider.dart';
 
+const _categoryLabels = {
+  'PLUMBING': 'Plumbing',
+  'ELECTRICAL': 'Electrical',
+  'AC_HVAC': 'HVAC / AC',
+  'APPLIANCE': 'Appliances',
+  'CLEANING': 'Cleaning',
+  'PEST_CONTROL': 'Pest Control',
+  'STRUCTURAL': 'Structural',
+  'OTHER': 'Other',
+};
+
 class MaintenanceRequest {
   final String id;
   final String title;
   final String category;
+  String get categoryLabel => _categoryLabels[category.toUpperCase()] ?? category;
   final String description;
   final String status;
   final DateTime createdAt;

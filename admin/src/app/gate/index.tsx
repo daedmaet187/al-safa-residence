@@ -81,7 +81,19 @@ function GateLogsTab() {
     {
       accessorKey: 'guestName',
       header: 'Guest',
-      cell: ({ row }) => <span className="font-medium">{row.original.guestName}</span>,
+      cell: ({ row }) => (
+        <div>
+          <p className="font-semibold text-[var(--text)]">{row.original.guestName}</p>
+          {(row.original as any).guestPhone && (
+            <p className="text-xs text-[var(--text-muted)]">{(row.original as any).guestPhone}</p>
+          )}
+        </div>
+      ),
+    },
+    {
+      id: 'resident',
+      header: 'Resident',
+      cell: ({ row }) => (row.original as any).resident?.name ?? <span className="text-[var(--text-muted)]">—</span>,
     },
     {
       id: 'unit',
@@ -98,13 +110,13 @@ function GateLogsTab() {
           ) : (
             <ShieldX className="h-4 w-4 text-[var(--danger)]" />
           )}
-          <Badge variant={gateResultVariant[row.original.result]}>{row.original.result}</Badge>
+          <Badge variant={gateResultVariant[row.original.result] ?? 'secondary'}>{row.original.result}</Badge>
         </div>
       ),
     },
     {
       accessorKey: 'officer',
-      header: 'Security Officer',
+      header: 'Security Guard',
       cell: ({ row }) => row.original.officer ?? <span className="text-[var(--text-muted)]">—</span>,
     },
     {

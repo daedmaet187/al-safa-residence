@@ -192,9 +192,9 @@ export class AdminService {
       ...r,
       resident: { id: r.user.id, name: r.user.name, email: (r.user as any).email, role: 'resident' },
       submittedAt: r.createdAt,
-      status: r.status.toLowerCase().replace('_', '-') as any,
+      status: r.status.toLowerCase() as any,  // in_progress, pending, resolved, cancelled
       priority: r.priority.toLowerCase() as any,
-      category: r.category.toLowerCase().replace('_', '-') as any,
+      category: r.category.toLowerCase() as any,
     }));
     return paginate(mapped, count, skip, take);
   }
@@ -253,7 +253,7 @@ export class AdminService {
       ...b,
       resident: { id: b.user.id, name: b.user.name, email: b.user.email, role: 'resident' },
       status: b.status.toLowerCase() as any,
-      type: b.type.toLowerCase().replace('_', '-') as any,
+      type: b.type.toLowerCase().replace('_', '-') as any,  // billing uses dash: monthly-fee
     }));
     return paginate(mapped, count, skip, take);
   }
@@ -315,7 +315,7 @@ export class AdminService {
       bill: {
         ...p.bill,
         resident: { id: p.bill.user.id, name: p.bill.user.name, role: 'resident' },
-        type: p.bill.type.toLowerCase().replace('_', '-'),
+        type: p.bill.type.toLowerCase().replace('_', '-'),  // billing uses dash
       },
     }));
     return paginate(mapped, count, skip, take);
@@ -368,7 +368,7 @@ export class AdminService {
                   id: true, name: true,
                   unitAssignments: {
                     where: { endDate: null, isPrimary: true },
-                    include: { unit: { select: { number: true } } },
+                    include: { unit: { select: { number: true, building: true } } },
                     take: 1,
                   },
                 },
@@ -379,10 +379,28 @@ export class AdminService {
       }),
       this.prisma.gateLog.count(),
     ]);
+
+    // Fetch guard info for all scannedByIds
+    const guardIds = [...new Set(data.map((l) => l.scannedById))];
+    const guards = await this.prisma.user.findMany({
+      where: { id: { in: guardIds } },
+      select: { id: true, name: true },
+    });
+    const guardMap = Object.fromEntries(guards.map((g) => [g.id, g]));
+
     const mapped = data.map((l) => ({
       ...l,
+      result: l.result.toLowerCase(),
       guestName: l.guestPass.guestName,
+      guestPhone: l.guestPass.guestPhone,
+      resident: {
+        id: l.guestPass.user.id,
+        name: l.guestPass.user.name,
+        role: 'resident',
+      },
       unit: (l.guestPass.user as any).unitAssignments?.[0]?.unit ?? null,
+      officer: guardMap[l.scannedById]?.name ?? 'Unknown Guard',
+      guardId: l.scannedById,
     }));
     return paginate(mapped, count, skip, take);
   }
