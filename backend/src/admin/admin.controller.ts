@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Patch,
+  Delete,
   Body,
   Param,
   Query,
@@ -52,12 +53,46 @@ export class AdminController {
     );
   }
 
+  @Post('residents')
+  @ApiOperation({ summary: 'Create resident' })
+  createResident(
+    @Body() dto: { name: string; email: string; phone?: string; password: string; unitId?: string },
+  ) {
+    return this.adminService.createResident(dto);
+  }
+
+  @Patch('residents/:id')
+  @ApiOperation({ summary: 'Update resident' })
+  updateResident(
+    @Param('id') id: string,
+    @Body() dto: { name?: string; phone?: string; isActive?: boolean; status?: string },
+  ) {
+    return this.adminService.updateResident(id, dto);
+  }
+
   // ── Units ──────────────────────────────────────────────────────────────────
 
   @Get('units')
   @ApiOperation({ summary: 'List units' })
   getUnits(@Query('skip') skip?: string, @Query('take') take?: string) {
     return this.adminService.getUnits(skip ? +skip : 0, take ? +take : 50);
+  }
+
+  @Post('units')
+  @ApiOperation({ summary: 'Create unit' })
+  createUnit(
+    @Body() dto: { number: string; floor: number; building?: string; type: string; area: number; bedrooms: number; bathrooms: number; parkingSpot?: string },
+  ) {
+    return this.adminService.createUnit(dto);
+  }
+
+  @Patch('units/:id')
+  @ApiOperation({ summary: 'Update unit' })
+  updateUnit(
+    @Param('id') id: string,
+    @Body() dto: { number?: string; floor?: number; building?: string; type?: string; area?: number; bedrooms?: number; bathrooms?: number; parkingSpot?: string; isActive?: boolean },
+  ) {
+    return this.adminService.updateUnit(id, dto);
   }
 
   // ── Announcements ──────────────────────────────────────────────────────────
@@ -76,6 +111,21 @@ export class AdminController {
     return this.adminService.createAnnouncement(dto);
   }
 
+  @Patch('announcements/:id')
+  @ApiOperation({ summary: 'Update announcement' })
+  updateAnnouncement(
+    @Param('id') id: string,
+    @Body() dto: { title?: string; body?: string; isImportant?: boolean; expiresAt?: string },
+  ) {
+    return this.adminService.updateAnnouncement(id, dto);
+  }
+
+  @Delete('announcements/:id')
+  @ApiOperation({ summary: 'Delete announcement' })
+  deleteAnnouncement(@Param('id') id: string) {
+    return this.adminService.deleteAnnouncement(id);
+  }
+
   // ── Maintenance ────────────────────────────────────────────────────────────
 
   @Get('maintenance')
@@ -90,9 +140,15 @@ export class AdminController {
   }
 
   @Patch('maintenance/:id/status')
-  @ApiOperation({ summary: 'Update maintenance request status' })
-  updateMaintenanceStatus(@Param('id') id: string, @Body() dto: { status: string }) {
-    return this.adminService.updateMaintenanceStatus(id, dto.status);
+  @ApiOperation({ summary: 'Update maintenance request status (subpath form)' })
+  updateMaintenanceStatusSubpath(@Param('id') id: string, @Body() dto: { status: string; adminNotes?: string }) {
+    return this.adminService.updateMaintenanceStatus(id, dto.status, dto.adminNotes);
+  }
+
+  @Patch('maintenance/:id')
+  @ApiOperation({ summary: 'Update maintenance request (direct patch form)' })
+  updateMaintenance(@Param('id') id: string, @Body() dto: { status?: string; adminNotes?: string }) {
+    return this.adminService.updateMaintenanceStatus(id, dto.status ?? '', dto.adminNotes);
   }
 
   // ── Bills ──────────────────────────────────────────────────────────────────
@@ -136,6 +192,12 @@ export class AdminController {
   @ApiOperation({ summary: 'List guest passes' })
   getGatePasses(@Query('skip') skip?: string, @Query('take') take?: string) {
     return this.adminService.getGatePasses(skip ? +skip : 0, take ? +take : 50);
+  }
+
+  @Patch('gate/passes/:id/revoke')
+  @ApiOperation({ summary: 'Revoke guest pass' })
+  revokeGuestPass(@Param('id') id: string) {
+    return this.adminService.revokeGuestPass(id);
   }
 
   @Get('gate/logs')
@@ -190,5 +252,16 @@ export class AdminController {
   @ApiOperation({ summary: 'Gate access stats' })
   getGateReport() {
     return this.adminService.getGateReport();
+  }
+
+  @Patch('staff/:id')
+  @ApiOperation({ summary: 'Update staff member' })
+  updateStaffById(@Param('id') id: string, @Body() dto: { role?: string; isActive?: boolean; status?: string }) {
+    // normalise status→isActive for dashboard compat
+    const patch: { role?: string; isActive?: boolean } = {};
+    if (dto.role !== undefined) patch.role = dto.role;
+    if (dto.isActive !== undefined) patch.isActive = dto.isActive;
+    if (dto.status !== undefined) patch.isActive = dto.status === 'active';
+    return this.adminService.updateStaff(id, patch);
   }
 }

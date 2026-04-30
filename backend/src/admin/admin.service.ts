@@ -123,6 +123,26 @@ export class AdminService {
     });
   }
 
+  async updateAnnouncement(id: string, dto: { title?: string; body?: string; isImportant?: boolean; expiresAt?: string }) {
+    const record = await this.prisma.announcement.findUnique({ where: { id } });
+    if (!record || record.deletedAt) throw new NotFoundException(`Announcement ${id} not found`);
+    return this.prisma.announcement.update({
+      where: { id },
+      data: {
+        ...(dto.title ? { title: dto.title } : {}),
+        ...(dto.body ? { body: dto.body } : {}),
+        ...(dto.isImportant !== undefined ? { isImportant: dto.isImportant } : {}),
+        ...(dto.expiresAt !== undefined ? { expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : null } : {}),
+      },
+    });
+  }
+
+  async deleteAnnouncement(id: string) {
+    const record = await this.prisma.announcement.findUnique({ where: { id } });
+    if (!record) throw new NotFoundException(`Announcement ${id} not found`);
+    return this.prisma.announcement.update({ where: { id }, data: { deletedAt: new Date() } });
+  }
+
   // ── Maintenance ────────────────────────────────────────────────────────────
 
   async getMaintenance(skip = 0, take = 50, status?: string) {
@@ -145,15 +165,17 @@ export class AdminService {
     return { count, data };
   }
 
-  async updateMaintenanceStatus(id: string, status: string) {
+  async updateMaintenanceStatus(id: string, status: string, adminNotes?: string) {
     const record = await this.prisma.maintenanceRequest.findUnique({ where: { id } });
     if (!record) throw new NotFoundException(`Maintenance request ${id} not found`);
 
+    const upperStatus = status ? status.toUpperCase() as MaintenanceStatus : record.status;
     return this.prisma.maintenanceRequest.update({
       where: { id },
       data: {
-        status: status.toUpperCase() as MaintenanceStatus,
-        resolvedAt: status.toUpperCase() === 'RESOLVED' ? new Date() : undefined,
+        status: upperStatus,
+        resolvedAt: upperStatus === 'RESOLVED' ? new Date() : undefined,
+        ...(adminNotes ? { notes: adminNotes } : {}),
       },
       include: {
         unit: { select: { number: true, building: true } },
@@ -281,6 +303,51 @@ export class AdminService {
     return { count, data };
   }
 
+  async revokeGuestPass(id: string) {
+    const pass = await this.prisma.guestPass.findUnique({ where: { id } });
+    if (!pass) throw new NotFoundException(`Guest pass ${id} not found`);
+    return this.prisma.guestPass.update({ where: { id }, data: { status: 'REVOKED' } });
+  }
+
+  async createResident(dto: { name: string; email: string; phone?: string; password: string; unitId?: string }) {
+    const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    if (existing) throw new ConflictException('Email already in use');
+    const passwordHash = await bcrypt.hash(dto.password, 10);
+    const user = await this.prisma.user.create({
+      data: { name: dto.name, email: dto.email, passwordHash, phone: dto.phone, role: Role.RESIDENT },
+      select: { id: true, name: true, email: true, phone: true, role: true, isActive: true, createdAt: true },
+    });
+    if (dto.unitId) {
+      await this.prisma.unitAssignment.create({ data: { userId: user.id, unitId: dto.unitId, isPrimary: true } });
+    }
+    return user;
+  }
+
+  async updateResident(id: string, dto: { name?: string; phone?: string; isActive?: boolean; status?: string }) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) throw new NotFoundException(`User ${id} not found`);
+    const isActive = dto.isActive !== undefined ? dto.isActive : dto.status !== undefined ? dto.status === 'active' : undefined;
+    return this.prisma.user.update({
+      where: { id },
+      data: {
+        ...(dto.name ? { name: dto.name } : {}),
+        ...(dto.phone !== undefined ? { phone: dto.phone } : {}),
+        ...(isActive !== undefined ? { isActive } : {}),
+      },
+      select: { id: true, name: true, email: true, phone: true, role: true, isActive: true, createdAt: true },
+    });
+  }
+
+  async createUnit(dto: { number: string; floor: number; building?: string; type: string; area: number; bedrooms: number; bathrooms: number; parkingSpot?: string }) {
+    return this.prisma.unit.create({ data: dto });
+  }
+
+  async updateUnit(id: string, dto: any) {
+    const unit = await this.prisma.unit.findUnique({ where: { id } });
+    if (!unit) throw new NotFoundException(`Unit ${id} not found`);
+    return this.prisma.unit.update({ where: { id }, data: dto });
+  }
+
   // ── Staff ──────────────────────────────────────────────────────────────────
 
   async getStaff(skip = 0, take = 50) {
@@ -334,81 +401,138 @@ export class AdminService {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    const [total, paid, pending, overdue, revenueAgg, thisMonthAgg] = await Promise.all([
-      this.prisma.bill.count(),
-      this.prisma.bill.count({ where: { status: BillStatus.PAID } }),
-      this.prisma.bill.count({ where: { status: BillStatus.PENDING } }),
-      this.prisma.bill.count({
-        where: {
-          OR: [
-            { status: BillStatus.OVERDUE },
-            { status: BillStatus.PENDING, dueDate: { lt: now } },
-          ],
-        },
-      }),
-      this.prisma.payment.aggregate({ _sum: { amount: true }, where: { status: 'COMPLETED' } }),
-      this.prisma.payment.aggregate({
+    const [paidBillsAgg, overdueTotal, byTypeRaw, thisMonthAgg] = await Promise.all([
+      this.prisma.bill.aggregate({ _sum: { amount: true }, where: { status: BillStatus.PAID } }),
+      this.prisma.bill.aggregate({
         _sum: { amount: true },
-        where: { status: 'COMPLETED', paidAt: { gte: startOfMonth } },
+        where: { OR: [{ status: BillStatus.OVERDUE }, { status: BillStatus.PENDING, dueDate: { lt: now } }] },
+      }),
+      this.prisma.bill.groupBy({
+        by: ['type'],
+        _sum: { amount: true },
+        _count: { id: true },
+        where: { status: BillStatus.PAID },
+      }),
+      this.prisma.bill.aggregate({
+        _sum: { amount: true },
+        where: { status: BillStatus.PAID, updatedAt: { gte: startOfMonth } },
       }),
     ]);
 
     return {
-      total,
-      paid,
-      pending,
-      overdue,
-      totalRevenue: revenueAgg._sum.amount ?? 0,
-      thisMonth: thisMonthAgg._sum.amount ?? 0,
+      collectedThisMonth: thisMonthAgg._sum.amount ?? 0,
+      overdueTotal: overdueTotal._sum.amount ?? 0,
+      byType: byTypeRaw.map((r) => ({ type: r.type, amount: r._sum.amount ?? 0, count: r._count.id })),
+      // also include legacy fields for other consumers
+      totalRevenue: paidBillsAgg._sum.amount ?? 0,
     };
   }
 
   async getMaintenanceReport() {
-    const [total, pending, inProgress, resolved, cancelled, byCategoryRaw] = await Promise.all([
-      this.prisma.maintenanceRequest.count(),
-      this.prisma.maintenanceRequest.count({ where: { status: MaintenanceStatus.PENDING } }),
-      this.prisma.maintenanceRequest.count({ where: { status: MaintenanceStatus.IN_PROGRESS } }),
-      this.prisma.maintenanceRequest.count({ where: { status: MaintenanceStatus.RESOLVED } }),
-      this.prisma.maintenanceRequest.count({ where: { status: MaintenanceStatus.CANCELLED } }),
+    const [byCategoryRaw, byStatusRaw, resolvedRequests] = await Promise.all([
       this.prisma.maintenanceRequest.groupBy({ by: ['category'], _count: { id: true } }),
+      this.prisma.maintenanceRequest.groupBy({ by: ['status'], _count: { id: true } }),
+      this.prisma.maintenanceRequest.findMany({
+        where: { status: MaintenanceStatus.RESOLVED, resolvedAt: { not: null } },
+        select: { createdAt: true, resolvedAt: true },
+      }),
     ]);
 
+    const avgResolutionDays = resolvedRequests.length
+      ? resolvedRequests.reduce((sum, r) => {
+          const diff = (r.resolvedAt!.getTime() - r.createdAt.getTime()) / (1000 * 60 * 60 * 24);
+          return sum + diff;
+        }, 0) / resolvedRequests.length
+      : 0;
+
     return {
-      total,
-      pending,
-      inProgress,
-      resolved,
-      cancelled,
       byCategory: byCategoryRaw.map((r) => ({ category: r.category, count: r._count.id })),
+      byStatus: byStatusRaw.map((r) => ({ status: r.status, count: r._count.id })),
+      avgResolutionDays: Math.round(avgResolutionDays * 10) / 10,
+      // legacy flat fields
+      total: byStatusRaw.reduce((s, r) => s + r._count.id, 0),
+      pending: byStatusRaw.find((r) => r.status === 'PENDING')?._count.id ?? 0,
+      inProgress: byStatusRaw.find((r) => r.status === 'IN_PROGRESS')?._count.id ?? 0,
+      resolved: byStatusRaw.find((r) => r.status === 'RESOLVED')?._count.id ?? 0,
+      cancelled: byStatusRaw.find((r) => r.status === 'CANCELLED')?._count.id ?? 0,
     };
   }
 
   async getOccupancyReport() {
-    const [totalUnits, occupiedRaw] = await Promise.all([
+    const [totalUnits, occupiedRaw, byTypeRaw] = await Promise.all([
       this.prisma.unit.count({ where: { isActive: true } }),
       this.prisma.unitAssignment.groupBy({ by: ['unitId'], where: { endDate: null } }),
+      this.prisma.unit.groupBy({ by: ['type'], _count: { id: true } }),
     ]);
 
+    const occupiedUnitIds = new Set(occupiedRaw.map((r) => r.unitId));
     const occupied = occupiedRaw.length;
     const vacant = totalUnits - occupied;
 
+    // byType occupancy
+    const allUnits = await this.prisma.unit.findMany({ where: { isActive: true }, select: { id: true, type: true } });
+    const byTypeMap: Record<string, { occupied: number; total: number }> = {};
+    for (const u of allUnits) {
+      if (!byTypeMap[u.type]) byTypeMap[u.type] = { occupied: 0, total: 0 };
+      byTypeMap[u.type].total++;
+      if (occupiedUnitIds.has(u.id)) byTypeMap[u.type].occupied++;
+    }
+
     return {
-      totalUnits,
+      total: totalUnits,
       occupied,
       vacant,
       occupancyRate: totalUnits > 0 ? Math.round((occupied / totalUnits) * 100) : 0,
+      byType: Object.entries(byTypeMap).map(([type, v]) => ({ type, ...v })),
+      // legacy fields
+      totalUnits,
     };
   }
 
   async getGateReport() {
-    const [totalPasses, activePasses, usedPasses, totalScans, approvedScans] = await Promise.all([
-      this.prisma.guestPass.count(),
-      this.prisma.guestPass.count({ where: { status: 'ACTIVE' } }),
-      this.prisma.guestPass.count({ where: { status: 'USED' } }),
-      this.prisma.gateLog.count(),
-      this.prisma.gateLog.count({ where: { result: 'approved' } }),
-    ]);
+    const now = new Date();
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-    return { totalPasses, activePasses, usedPasses, totalScans, approvedScans };
+    const [totalPasses, activePasses, usedPasses, passesThisWeek, totalScans, approvedScans, recentLogs] =
+      await Promise.all([
+        this.prisma.guestPass.count(),
+        this.prisma.guestPass.count({ where: { status: 'ACTIVE' } }),
+        this.prisma.guestPass.count({ where: { status: 'USED' } }),
+        this.prisma.guestPass.count({ where: { createdAt: { gte: weekAgo } } }),
+        this.prisma.gateLog.count(),
+        this.prisma.gateLog.count({ where: { result: 'approved' } }),
+        this.prisma.gateLog.findMany({
+          where: { scannedAt: { gte: weekAgo } },
+          select: { scannedAt: true, result: true },
+          orderBy: { scannedAt: 'asc' },
+        }),
+      ]);
+
+    // Build scans per day for last 7 days
+    const dayMap: Record<string, { approved: number; denied: number }> = {};
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      dayMap[d.toISOString().slice(0, 10)] = { approved: 0, denied: 0 };
+    }
+    for (const log of recentLogs) {
+      const day = log.scannedAt.toISOString().slice(0, 10);
+      if (dayMap[day]) {
+        if (log.result === 'approved') dayMap[day].approved++;
+        else dayMap[day].denied++;
+      }
+    }
+    const scansPerDay = Object.entries(dayMap).map(([date, v]) => ({ date, ...v }));
+
+    return {
+      passesCreatedThisWeek: passesThisWeek,
+      scansPerDay,
+      // legacy fields
+      totalPasses,
+      activePasses,
+      usedPasses,
+      totalScans,
+      approvedScans,
+    };
   }
 }

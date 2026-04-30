@@ -1,0 +1,305 @@
+import { Injectable, NotFoundException, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
+import { v4 as uuidv4 } from 'uuid';
+import { PrismaService } from '../prisma/prisma.service';
+
+@Injectable()
+export class ResidentService {
+  constructor(private readonly prisma: PrismaService) {}
+
+  // ── Home summary ───────────────────────────────────────────────────────────
+
+  async getDashboardSummary(userId: string) {
+    const now = new Date();
+
+    const [recentAnnouncements, activeGuestPasses, overdueBillsCount, openMaintenance] =
+      await Promise.all([
+        this.prisma.announcement.findMany({
+          where: { deletedAt: null },
+          orderBy: { publishedAt: 'desc' },
+          take: 5,
+        }),
+        this.prisma.guestPass.count({
+          where: { userId, status: 'ACTIVE' },
+        }),
+        this.prisma.bill.count({
+          where: {
+            userId,
+            OR: [
+              { status: 'OVERDUE' },
+              { status: 'PENDING', dueDate: { lt: now } },
+            ],
+          },
+        }),
+        this.prisma.maintenanceRequest.count({
+          where: { userId, status: { in: ['PENDING', 'IN_PROGRESS'] } },
+        }),
+      ]);
+
+    return {
+      recentAnnouncements,
+      activeGuestPasses,
+      overdueBills: overdueBillsCount,
+      openMaintenanceRequests: openMaintenance,
+    };
+  }
+
+  // ── Bills ──────────────────────────────────────────────────────────────────
+
+  async getBills(userId: string, status?: string) {
+    const now = new Date();
+    let where: any = { userId };
+
+    if (status === 'paid') {
+      where.status = 'PAID';
+    } else if (status === 'overdue') {
+      where = {
+        userId,
+        OR: [{ status: 'OVERDUE' }, { status: 'PENDING', dueDate: { lt: now } }],
+      };
+    } else if (status) {
+      where.status = status.toUpperCase();
+    }
+
+    const bills = await this.prisma.bill.findMany({
+      where,
+      orderBy: { dueDate: 'asc' },
+      include: {
+        unit: { select: { number: true, building: true } },
+        payments: { orderBy: { createdAt: 'desc' }, take: 1 },
+      },
+    });
+
+    // Shape to match mobile Bill model: needs title, lineItems
+    return bills.map((b) => ({
+      id: b.id,
+      title: this.billTitle(b.type, b.description),
+      type: b.type.toLowerCase(),
+      amount: b.amount,
+      currency: b.currency,
+      status: b.status.toLowerCase(),
+      dueDate: b.dueDate,
+      paidAt: b.payments[0]?.paidAt ?? null,
+      unit: b.unit,
+      lineItems: [],
+    }));
+  }
+
+  async getBill(userId: string, id: string) {
+    const bill = await this.prisma.bill.findUnique({
+      where: { id },
+      include: {
+        unit: { select: { number: true, building: true } },
+        payments: { orderBy: { createdAt: 'desc' } },
+      },
+    });
+    if (!bill || bill.userId !== userId) throw new NotFoundException('Bill not found');
+
+    return {
+      id: bill.id,
+      title: this.billTitle(bill.type, bill.description),
+      type: bill.type.toLowerCase(),
+      amount: bill.amount,
+      currency: bill.currency,
+      status: bill.status.toLowerCase(),
+      dueDate: bill.dueDate,
+      paidAt: bill.payments[0]?.paidAt ?? null,
+      unit: bill.unit,
+      lineItems: [{ label: this.billTitle(bill.type, bill.description), amount: bill.amount }],
+    };
+  }
+
+  async payBill(userId: string, billId: string, method: string) {
+    const bill = await this.prisma.bill.findUnique({ where: { id: billId } });
+    if (!bill || bill.userId !== userId) throw new NotFoundException('Bill not found');
+    if (bill.status === 'PAID') throw new BadRequestException('Bill already paid');
+
+    const methodMap: Record<string, string> = {
+      cash: 'CASH',
+      bank_transfer: 'BANK_TRANSFER',
+      card: 'CARD',
+      online: 'ONLINE',
+    };
+
+    await this.prisma.$transaction([
+      this.prisma.payment.create({
+        data: {
+          billId,
+          userId,
+          amount: bill.amount,
+          currency: bill.currency,
+          method: (methodMap[method?.toLowerCase()] ?? 'CASH') as any,
+          status: 'COMPLETED',
+          paidAt: new Date(),
+        },
+      }),
+      this.prisma.bill.update({ where: { id: billId }, data: { status: 'PAID' } }),
+    ]);
+
+    return { success: true, billId };
+  }
+
+  private billTitle(type: string, description?: string | null): string {
+    if (description) return description;
+    const map: Record<string, string> = {
+      MONTHLY_FEE: 'Monthly Service Fee',
+      UTILITIES: 'Utilities',
+      MAINTENANCE_FEE: 'Maintenance Fee',
+      PARKING: 'Parking Fee',
+      OTHER: 'Bill',
+    };
+    return map[type] ?? type;
+  }
+
+  // ── Gate ───────────────────────────────────────────────────────────────────
+
+  async getMyQr(userId: string) {
+    // Return a stable QR based on userId — this is the resident's gate pass
+    return { qrCode: `resident:${userId}` };
+  }
+
+  async getGuestPasses(userId: string) {
+    const passes = await this.prisma.guestPass.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        user: { select: { name: true, unitAssignments: { where: { endDate: null, isPrimary: true }, include: { unit: { select: { number: true } } }, take: 1 } } },
+      },
+    });
+
+    return passes.map((p) => ({
+      id: p.id,
+      guestName: p.guestName,
+      guestPhone: p.guestPhone ?? '',
+      guestIdNumber: p.guestId ?? null,
+      validFrom: p.validFrom,
+      validUntil: p.validUntil ?? new Date(p.validFrom.getTime() + 24 * 60 * 60 * 1000),
+      status: p.status.toLowerCase(),
+      qrCode: p.qrCode,
+      residentName: p.user.name,
+      unitNumber: p.user.unitAssignments[0]?.unit.number ?? '',
+    }));
+  }
+
+  async createGuestPass(
+    userId: string,
+    dto: { guestName: string; guestPhone: string; guestIdNumber?: string; validFrom: string; validUntil: string; purpose?: string },
+  ) {
+    const pass = await this.prisma.guestPass.create({
+      data: {
+        userId,
+        guestName: dto.guestName,
+        guestPhone: dto.guestPhone,
+        guestId: dto.guestIdNumber,
+        purpose: dto.purpose,
+        qrCode: uuidv4(),
+        validFrom: new Date(dto.validFrom),
+        validUntil: new Date(dto.validUntil),
+      },
+      include: {
+        user: { select: { name: true, unitAssignments: { where: { endDate: null, isPrimary: true }, include: { unit: { select: { number: true } } }, take: 1 } } },
+      },
+    });
+
+    return {
+      id: pass.id,
+      guestName: pass.guestName,
+      guestPhone: pass.guestPhone ?? '',
+      guestIdNumber: pass.guestId ?? null,
+      validFrom: pass.validFrom,
+      validUntil: pass.validUntil!,
+      status: pass.status.toLowerCase(),
+      qrCode: pass.qrCode,
+      residentName: pass.user.name,
+      unitNumber: pass.user.unitAssignments[0]?.unit.number ?? '',
+    };
+  }
+
+  async revokeGuestPass(userId: string, passId: string) {
+    const pass = await this.prisma.guestPass.findUnique({ where: { id: passId } });
+    if (!pass || pass.userId !== userId) throw new NotFoundException('Guest pass not found');
+    return this.prisma.guestPass.update({ where: { id: passId }, data: { status: 'REVOKED' } });
+  }
+
+  // ── Units ──────────────────────────────────────────────────────────────────
+
+  async getMyUnit(userId: string) {
+    const assignment = await this.prisma.unitAssignment.findFirst({
+      where: { userId, endDate: null, isPrimary: true },
+      include: { unit: true },
+    });
+
+    if (!assignment) throw new NotFoundException('No unit assigned');
+
+    const unit = assignment.unit;
+    const now = new Date();
+    const startDate = assignment.startDate;
+    const monthsInResidence = Math.floor(
+      (now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30),
+    );
+
+    const [totalPaidAgg, openMaintenance] = await Promise.all([
+      this.prisma.bill.aggregate({
+        _sum: { amount: true },
+        where: { userId, unitId: unit.id, status: 'PAID' },
+      }),
+      this.prisma.maintenanceRequest.count({
+        where: { userId, unitId: unit.id, status: { in: ['PENDING', 'IN_PROGRESS'] } },
+      }),
+    ]);
+
+    return {
+      unit: {
+        id: unit.id,
+        number: unit.number,
+        floor: unit.floor,
+        building: unit.building,
+        type: unit.type,
+        area: unit.area,
+        bedrooms: unit.bedrooms,
+        bathrooms: unit.bathrooms,
+        parkingSpot: unit.parkingSpot,
+      },
+      stats: {
+        monthsInResidence,
+        totalPaid: totalPaidAgg._sum.amount ?? 0,
+        openMaintenanceRequests: openMaintenance,
+      },
+      documents: [],
+    };
+  }
+
+  // ── Profile ────────────────────────────────────────────────────────────────
+
+  async getProfile(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, name: true, email: true, phone: true, role: true, createdAt: true },
+    });
+    if (!user) throw new NotFoundException('User not found');
+    return user;
+  }
+
+  async updateProfile(userId: string, dto: { name?: string; phone?: string }) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(dto.name ? { name: dto.name } : {}),
+        ...(dto.phone !== undefined ? { phone: dto.phone } : {}),
+      },
+      select: { id: true, name: true, email: true, phone: true, role: true, createdAt: true },
+    });
+  }
+
+  async changePassword(userId: string, currentPassword: string, newPassword: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+
+    const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!valid) throw new UnauthorizedException('Current password is incorrect');
+
+    const hash = await bcrypt.hash(newPassword, 10);
+    await this.prisma.user.update({ where: { id: userId }, data: { passwordHash: hash } });
+    return { message: 'Password changed successfully' };
+  }
+}
