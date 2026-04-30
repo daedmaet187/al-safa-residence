@@ -54,6 +54,20 @@ function StatusUpdateDialog({ request, open, onClose }: { request: MaintenanceRe
             <p className="text-sm font-medium text-[var(--text)] mb-1">Description</p>
             <p className="text-sm text-[var(--text-muted)]">{request.description}</p>
           </div>
+          {(request.photos ?? []).length > 0 && (
+            <div>
+              <p className="text-sm font-medium text-[var(--text)] mb-2">Photos</p>
+              <div className="flex gap-2 flex-wrap">
+                {(request.photos ?? []).map((url: string, i: number) => (
+                  <a key={i} href={url} target="_blank" rel="noreferrer">
+                    <img src={url} alt={`Photo ${i+1}`} className="w-20 h-20 rounded-lg object-cover border border-[var(--border)] hover:opacity-80 transition-opacity" />
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+          <div>
+          </div>
           <div>
             <p className="text-sm font-medium text-[var(--text)] mb-2">Update Status</p>
             <Select value={status} onValueChange={(v) => setStatus(v as MaintenanceRequest['status'])}>

@@ -54,7 +54,7 @@ class MaintenanceRequest {
                 ?.map((e) => e as String)
                 .toList() ??
             [],
-        adminNote: json['adminNote'] as String?,
+        adminNote: (json['notes'] as String?) ?? (json['adminNote'] as String?),
         timeline: (json['timeline'] as List<dynamic>?)
                 ?.map((e) => StatusEvent.fromJson(e as Map<String, dynamic>))
                 .toList() ??

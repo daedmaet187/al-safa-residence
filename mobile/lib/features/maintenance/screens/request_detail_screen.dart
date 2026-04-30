@@ -5,6 +5,16 @@ import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/status_chip.dart';
 import '../providers/maintenance_provider.dart';
 
+Widget _photoPlaceholder(bool isDark) => Container(
+  width: 100, height: 100,
+  decoration: BoxDecoration(
+    color: isDark ? AppColors.darkSurfaceRaised : AppColors.background,
+    borderRadius: BorderRadius.circular(10),
+  ),
+  child: Icon(Icons.image_outlined,
+      color: isDark ? AppColors.darkTextSubtle : AppColors.textSubtle, size: 32),
+);
+
 class RequestDetailScreen extends ConsumerWidget {
   const RequestDetailScreen({super.key, required this.requestId});
   final String requestId;
@@ -81,8 +91,35 @@ class RequestDetailScreen extends ConsumerWidget {
                 const SizedBox(height: 20),
               ],
 
+              // Photos
+              if (request.photoUrls.isNotEmpty) ...[
+                Text('Attached Photos',
+                    style: Theme.of(context).textTheme.titleSmall),
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 100,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: request.photoUrls.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (context, i) {
+                      final url = request.photoUrls[i];
+                      final isRemote = url.startsWith('http');
+                      return ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: isRemote
+                            ? Image.network(url, width: 100, height: 100, fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => _photoPlaceholder(isDark))
+                            : _photoPlaceholder(isDark),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
+
               // Admin note
-              if (request.adminNote != null) ...[
+              if (request.adminNote != null && request.adminNote!.isNotEmpty) ...[
                 Text('Admin Note',
                     style: Theme.of(context).textTheme.titleSmall),
                 const SizedBox(height: 8),

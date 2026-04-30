@@ -1,7 +1,10 @@
+import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../core/network/dio_client.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/gold_button.dart';
 import '../providers/maintenance_provider.dart';
@@ -44,10 +47,44 @@ class _CreateRequestScreenState extends ConsumerState<CreateRequestScreen> {
 
   Future<void> _pickImage(ImageSource source) async {
     final picker = ImagePicker();
-    final file = await picker.pickImage(source: source, imageQuality: 80);
-    if (file != null) {
-      // In real implementation, upload to S3 and get URL
-      setState(() => _photoUrls.add(file.path));
+    final file = await picker.pickImage(source: source, imageQuality: 70, maxWidth: 1024);
+    if (file == null) return;
+
+    setState(() => _isLoading = true);
+    try {
+      final dio = ref.read(dioProvider);
+      final bytes = await File(file.path).readAsBytes();
+      final userId = DateTime.now().millisecondsSinceEpoch;
+      final key = 'uploads/${file.name.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_')}_$userId.jpg';
+
+      // 1. Get presigned URL
+      final presignedResp = await dio.post('/uploads/presigned', data: {
+        'key': key,
+        'contentType': 'image/jpeg',
+        'contentLength': bytes.length,
+      });
+      final uploadUrl = presignedResp.data['uploadUrl'] as String;
+      final fileUrl = presignedResp.data['key'] as String? ?? key;
+
+      // 2. Upload to S3
+      await Dio().put(
+        uploadUrl,
+        data: Stream.fromIterable([bytes]),
+        options: Options(
+          headers: {
+            'Content-Type': 'image/jpeg',
+            'Content-Length': bytes.length,
+          },
+        ),
+      );
+
+      // 3. Store the S3 URL
+      final s3Url = presignedResp.data['url'] as String? ?? uploadUrl.split('?')[0];
+      setState(() => _photoUrls.add(s3Url));
+    } catch (_) {
+      // If upload fails, skip photo silently (don't block request creation)
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -204,13 +241,9 @@ class _CreateRequestScreenState extends ConsumerState<CreateRequestScreen> {
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(12),
-                            child: Icon(
-                              Icons.image_rounded,
-                              color: isDark
-                                  ? AppColors.darkTextSubtle
-                                  : AppColors.textSubtle,
-                              size: 32,
-                            ),
+                            child: url.startsWith('http')
+                              ? Image.network(url, width: 80, height: 80, fit: BoxFit.cover)
+                              : Image.file(File(url), width: 80, height: 80, fit: BoxFit.cover),
                           ),
                         ),
                         Positioned(
