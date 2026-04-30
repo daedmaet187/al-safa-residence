@@ -16,7 +16,7 @@ class CommunityScreen extends ConsumerWidget {
 
     return PopScope(
       canPop: false,
-      onPopInvoked: (didPop) {
+      onPopInvokedWithResult: (didPop, result) {
         if (!didPop) {
           if (context.canPop()) {
             context.pop();
