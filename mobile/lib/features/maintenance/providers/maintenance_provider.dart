@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/dio_client.dart';
+import '../../auth/providers/auth_provider.dart';
 
 class MaintenanceRequest {
   final String id;
@@ -68,7 +69,16 @@ final maintenanceRequestsProvider =
     FutureProvider<List<MaintenanceRequest>>((ref) async {
   final dio = ref.watch(dioProvider);
   final response = await dio.get('/maintenance');
-  final list = response.data as List<dynamic>;
+  // API returns {count, data:[]} or a flat list
+  final raw = response.data;
+  final List<dynamic> list;
+  if (raw is Map<String, dynamic> && raw.containsKey('data')) {
+    list = raw['data'] as List<dynamic>;
+  } else if (raw is List<dynamic>) {
+    list = raw;
+  } else {
+    list = [];
+  }
   return list
       .map((e) => MaintenanceRequest.fromJson(e as Map<String, dynamic>))
       .toList();
@@ -94,11 +104,15 @@ class MaintenanceNotifier extends AsyncNotifier<void> {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final dio = ref.read(dioProvider);
+      // Get unitId from auth state
+      final authState = ref.read(authProvider).value;
+      final unitId = authState?.activeUnit?.id ?? '';
       await dio.post('/maintenance', data: {
         'title': title,
         'category': category,
         'description': description,
         'photoUrls': photoUrls,
+        if (unitId.isNotEmpty) 'unitId': unitId,
       });
       ref.invalidate(maintenanceRequestsProvider);
     });

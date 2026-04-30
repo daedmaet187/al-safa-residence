@@ -19,6 +19,10 @@ class CommunityScreen extends ConsumerWidget {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Community'),
+          leading: Navigator.canPop(context)
+              ? const BackButton()
+              : null,
+          automaticallyImplyLeading: true,
           bottom: TabBar(
             tabs: const [
               Tab(text: 'Announcements'),

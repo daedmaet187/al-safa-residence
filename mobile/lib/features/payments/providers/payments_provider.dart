@@ -62,11 +62,22 @@ class BillLineItem {
 
 // ---------- Providers ----------
 
+List<Bill> _parseBills(dynamic raw) {
+  final List<dynamic> list;
+  if (raw is Map<String, dynamic> && raw.containsKey('data')) {
+    list = raw['data'] as List<dynamic>;
+  } else if (raw is List<dynamic>) {
+    list = raw;
+  } else {
+    list = [];
+  }
+  return list.map((e) => Bill.fromJson(e as Map<String, dynamic>)).toList();
+}
+
 final billsProvider = FutureProvider<List<Bill>>((ref) async {
   final dio = ref.watch(dioProvider);
   final response = await dio.get('/bills');
-  final list = response.data as List<dynamic>;
-  return list.map((e) => Bill.fromJson(e as Map<String, dynamic>)).toList();
+  return _parseBills(response.data);
 });
 
 final billDetailProvider =
@@ -79,8 +90,7 @@ final billDetailProvider =
 final paymentHistoryProvider = FutureProvider<List<Bill>>((ref) async {
   final dio = ref.watch(dioProvider);
   final response = await dio.get('/bills?status=paid');
-  final list = response.data as List<dynamic>;
-  return list.map((e) => Bill.fromJson(e as Map<String, dynamic>)).toList();
+  return _parseBills(response.data);
 });
 
 class PaymentNotifier extends AsyncNotifier<void> {

@@ -26,15 +26,24 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
     final authState = ref.read(authProvider);
     authState.when(
-      data: (state) {
+      data: (state) async {
         if (state.status == AuthStatus.authenticated) {
-          if (state.user?.role == 'security') {
+          if (state.user?.role == 'security' || state.user?.role == 'SECURITY') {
             context.go('/security');
           } else {
             context.go('/home');
           }
         } else {
-          context.go('/onboarding');
+          // Only show onboarding once; after that go straight to login
+          final storage = ref.read(secureStorageProvider);
+          final seen = await storage.getHasSeenOnboarding();
+          if (!mounted) return;
+          if (seen) {
+            context.go('/login');
+          } else {
+            await storage.setHasSeenOnboarding();
+            context.go('/onboarding');
+          }
         }
       },
       loading: () => _navigate(),

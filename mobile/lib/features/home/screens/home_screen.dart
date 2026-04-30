@@ -8,6 +8,8 @@ import '../../../shared/widgets/section_header.dart';
 import '../../../shared/models/announcement.dart';
 import '../providers/home_provider.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../community/providers/community_provider.dart';
+import '../../../shared/models/announcement.dart' as ann_model;
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -107,7 +109,7 @@ class HomeScreen extends ConsumerWidget {
                           const SizedBox(width: 8),
                           // Notifications
                           GestureDetector(
-                            onTap: () {},
+                            onTap: () => _showNotifications(context, ref),
                             child: Container(
                               width: 40,
                               height: 40,
@@ -305,6 +307,15 @@ class HomeScreen extends ConsumerWidget {
     if (hour < 17) return 'afternoon';
     return 'evening';
   }
+
+  void _showNotifications(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _NotificationsSheet(ref: ref),
+    );
+  }
 }
 
 class _QuickAction extends StatelessWidget {
@@ -483,6 +494,133 @@ class _AnnouncementPreview extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── Notifications bottom sheet ────────────────────────────────────────────────
+
+class _NotificationsSheet extends ConsumerWidget {
+  const _NotificationsSheet({required this.ref});
+  final WidgetRef ref;
+
+  @override
+  Widget build(BuildContext context, WidgetRef watchRef) {
+    final announcementsAsync = watchRef.watch(announcementsProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.6,
+      minChildSize: 0.4,
+      maxChildSize: 0.92,
+      builder: (_, controller) => Container(
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.darkSurface : AppColors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkBorder : AppColors.border,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  const Icon(Icons.notifications_outlined),
+                  const SizedBox(width: 10),
+                  Text('Notifications',
+                      style: Theme.of(context).textTheme.titleMedium),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Divider(height: 1),
+            Expanded(
+              child: announcementsAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (_, __) => const Center(child: Text('Could not load notifications')),
+                data: (items) {
+                  if (items.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.notifications_none_outlined,
+                              size: 56,
+                              color: isDark ? AppColors.darkTextSubtle : AppColors.textSubtle),
+                          const SizedBox(height: 12),
+                          Text('No notifications',
+                              style: Theme.of(context).textTheme.titleSmall),
+                        ],
+                      ),
+                    );
+                  }
+                  return ListView.separated(
+                    controller: controller,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    itemCount: items.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    itemBuilder: (ctx, i) {
+                      final item = items[i];
+                      return ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          side: BorderSide(
+                            color: item.isImportant
+                                ? AppColors.accent.withOpacity(0.4)
+                                : (isDark ? AppColors.darkBorder : AppColors.border),
+                          ),
+                        ),
+                        tileColor: isDark ? AppColors.darkSurfaceRaised : AppColors.background,
+                        leading: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: item.isImportant
+                                ? AppColors.accent.withOpacity(0.15)
+                                : (isDark ? AppColors.darkPrimaryLight : AppColors.primaryLight),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            item.isImportant
+                                ? Icons.campaign_rounded
+                                : Icons.notifications_rounded,
+                            size: 20,
+                            color: item.isImportant
+                                ? AppColors.accent
+                                : (isDark ? AppColors.darkPrimary : AppColors.primary),
+                          ),
+                        ),
+                        title: Text(item.title,
+                            style: Theme.of(context).textTheme.titleSmall,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis),
+                        subtitle: Text(item.body,
+                            style: Theme.of(context).textTheme.bodySmall,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis),
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          context.push('/home/community/${item.id}');
+                        },
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

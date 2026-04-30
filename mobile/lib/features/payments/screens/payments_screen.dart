@@ -85,6 +85,8 @@ class _BillCard extends StatelessWidget {
           (isDark ? AppColors.darkDanger : AppColors.danger).withOpacity(0.4);
     }
 
+    final isPending = bill.status == BillStatus.pending || bill.status == BillStatus.overdue;
+
     return GestureDetector(
       onTap: () => context.push('/home/payments/${bill.id}'),
       child: Container(
@@ -93,53 +95,81 @@ class _BillCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: borderColor),
         ),
-        padding: const EdgeInsets.all(16),
-        child: Row(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.darkPrimaryLight
-                    : AppColors.primaryLight,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                _iconFor(bill.type),
-                color: isDark ? AppColors.darkPrimary : AppColors.primary,
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(bill.title,
-                      style: Theme.of(context).textTheme.titleSmall),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Due ${dateFmt.format(bill.dueDate)}',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
-              ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+            Row(
               children: [
-                Text(
-                  currencyFmt.format(bill.amount),
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? AppColors.darkText : AppColors.text,
-                      ),
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? AppColors.darkPrimaryLight
+                        : AppColors.primaryLight,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    _iconFor(bill.type),
+                    color: isDark ? AppColors.darkPrimary : AppColors.primary,
+                    size: 24,
+                  ),
                 ),
-                const SizedBox(height: 4),
-                StatusChip(status: bill.status.name),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(bill.title,
+                          style: Theme.of(context).textTheme.titleSmall),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Due ${dateFmt.format(bill.dueDate)}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: bill.status == BillStatus.overdue
+                              ? (isDark ? AppColors.darkDanger : AppColors.danger)
+                              : null,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      currencyFmt.format(bill.amount),
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    StatusChip(status: bill.status.name),
+                  ],
+                ),
               ],
             ),
+            if (isPending) ...[  
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: () => context.push('/home/payments/${bill.id}/pay'),
+                  icon: const Icon(Icons.payment_rounded, size: 18),
+                  label: const Text('Pay Now'),
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    backgroundColor:
+                        bill.status == BillStatus.overdue
+                            ? (isDark ? AppColors.darkDanger : AppColors.danger)
+                            : (isDark ? AppColors.darkPrimary : AppColors.primary),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),

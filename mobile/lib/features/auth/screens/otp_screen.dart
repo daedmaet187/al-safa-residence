@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/gold_button.dart';
 import '../providers/auth_provider.dart';
@@ -83,14 +82,10 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                   Icons.sms_outlined,
                   color: isDark ? AppColors.darkPrimary : AppColors.primary,
                   size: 28,
-                ),
-              ).animate().fadeIn(duration: 400.ms).scale(
-                  begin: const Offset(0.8, 0.8)),
+                ),),
               const SizedBox(height: 24),
               Text('Enter OTP',
                       style: Theme.of(context).textTheme.headlineMedium)
-                  .animate(delay: 100.ms)
-                  .fadeIn()
                   .slideY(begin: 0.2),
               const SizedBox(height: 8),
               Text(
@@ -99,7 +94,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                     color: isDark
                         ? AppColors.darkTextMuted
                         : AppColors.textMuted),
-              ).animate(delay: 150.ms).fadeIn(),
+              ),
               const SizedBox(height: 36),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -146,14 +141,14 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                     ),
                   );
                 }),
-              ).animate(delay: 200.ms).fadeIn().slideY(begin: 0.2),
+              ),
               const SizedBox(height: 32),
               GoldButton(
                 label: 'Verify',
                 icon: Icons.check_rounded,
                 isLoading: _isLoading,
                 onPressed: _verify,
-              ).animate(delay: 300.ms).fadeIn(),
+              ),
               const SizedBox(height: 16),
               Center(
                 child: TextButton.icon(

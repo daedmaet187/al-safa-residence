@@ -5,6 +5,8 @@ const _kAuthToken = 'auth_token';
 const _kRefreshToken = 'refresh_token';
 const _kUserRole = 'user_role';
 const _kActiveUnitId = 'active_unit_id';
+const _kHasSeenOnboarding = 'has_seen_onboarding';
+const _kHasBiometricSetup = 'has_biometric_setup';
 
 final secureStorageProvider = Provider<SecureStorageService>((ref) {
   return SecureStorageService();
@@ -30,6 +32,20 @@ class SecureStorageService {
   Future<String?> getActiveUnitId() => _storage.read(key: _kActiveUnitId);
   Future<void> setActiveUnitId(String id) =>
       _storage.write(key: _kActiveUnitId, value: id);
+
+  Future<bool> getHasSeenOnboarding() async {
+    final v = await _storage.read(key: _kHasSeenOnboarding);
+    return v == 'true';
+  }
+  Future<void> setHasSeenOnboarding() =>
+      _storage.write(key: _kHasSeenOnboarding, value: 'true');
+
+  Future<bool> getHasBiometricSetup() async {
+    final v = await _storage.read(key: _kHasBiometricSetup);
+    return v == 'true';
+  }
+  Future<void> setHasBiometricSetup() =>
+      _storage.write(key: _kHasBiometricSetup, value: 'true');
 
   Future<void> clearAll() => _storage.deleteAll();
 }

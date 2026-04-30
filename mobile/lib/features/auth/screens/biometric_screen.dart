@@ -1,20 +1,37 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/storage/secure_storage.dart';
 import '../../../shared/widgets/gold_button.dart';
 
-class BiometricScreen extends StatefulWidget {
+class BiometricScreen extends ConsumerStatefulWidget {
   const BiometricScreen({super.key});
 
   @override
-  State<BiometricScreen> createState() => _BiometricScreenState();
+  ConsumerState<BiometricScreen> createState() => _BiometricScreenState();
 }
 
-class _BiometricScreenState extends State<BiometricScreen> {
+class _BiometricScreenState extends ConsumerState<BiometricScreen> {
   final LocalAuthentication _localAuth = LocalAuthentication();
   bool _isChecking = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // If biometric already set up, skip this screen entirely
+    _checkAlreadySetup();
+  }
+
+  Future<void> _checkAlreadySetup() async {
+    final storage = ref.read(secureStorageProvider);
+    final alreadySetup = await storage.getHasBiometricSetup();
+    if (alreadySetup && mounted) {
+      context.go('/home');
+    }
+  }
 
   Future<void> _enableBiometric() async {
     setState(() => _isChecking = true);
@@ -32,7 +49,10 @@ class _BiometricScreenState extends State<BiometricScreen> {
         ),
       );
       if (authenticated && mounted) {
-        context.go('/home');
+        // Mark as set up so we never show this screen again
+        final storage = ref.read(secureStorageProvider);
+        await storage.setHasBiometricSetup();
+        if (mounted) context.go('/home');
       }
     } catch (_) {
       if (mounted) _skip();
@@ -87,9 +107,7 @@ class _BiometricScreenState extends State<BiometricScreen> {
               Text(
                 'Use Face ID or Fingerprint to sign in quickly and securely next time.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: isDark
-                        ? AppColors.darkTextMuted
-                        : AppColors.textMuted),
+                    color: isDark ? AppColors.darkTextMuted : AppColors.textMuted),
                 textAlign: TextAlign.center,
               ).animate(delay: 300.ms).fadeIn(),
               const SizedBox(height: 48),
@@ -105,9 +123,7 @@ class _BiometricScreenState extends State<BiometricScreen> {
                 child: Text(
                   'Skip for now',
                   style: TextStyle(
-                      color: isDark
-                          ? AppColors.darkTextMuted
-                          : AppColors.textMuted),
+                      color: isDark ? AppColors.darkTextMuted : AppColors.textMuted),
                 ),
               ).animate(delay: 500.ms).fadeIn(),
             ],

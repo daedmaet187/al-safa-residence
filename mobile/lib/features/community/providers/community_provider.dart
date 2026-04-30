@@ -6,7 +6,15 @@ final announcementsProvider =
     FutureProvider<List<Announcement>>((ref) async {
   final dio = ref.watch(dioProvider);
   final response = await dio.get('/announcements');
-  final list = response.data as List<dynamic>;
+  final raw = response.data;
+  final List<dynamic> list;
+  if (raw is Map<String, dynamic> && raw.containsKey('data')) {
+    list = raw['data'] as List<dynamic>;
+  } else if (raw is List<dynamic>) {
+    list = raw;
+  } else {
+    list = [];
+  }
   return list
       .map((e) => Announcement.fromJson(e as Map<String, dynamic>))
       .toList();
