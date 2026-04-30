@@ -89,7 +89,7 @@ void main() {
       await container.read(authProvider.future);
 
       await container.read(authProvider.notifier).verifyOtp(
-        email: 'test@example.com',
+        phone: '+9647501234567',
         otp: '123456',
       );
 
@@ -108,7 +108,7 @@ void main() {
 
       await expectLater(
         container.read(authProvider.notifier).verifyOtp(
-          email: 'test@example.com',
+          phone: '+9647501234567',
           otp: 'bad-otp',
         ),
         throwsA(isA<DioException>()),
