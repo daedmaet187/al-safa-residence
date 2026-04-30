@@ -28,7 +28,7 @@ function CreateBillButton() {
   const { mutate, isPending } = useCreateBill()
   const form = useForm<CreateBillValues>({
     resolver: zodResolver(createBillSchema),
-    defaultValues: { residentId: '', unitId: '', type: 'maintenance_fee', amount: 0, dueDate: '' },
+    defaultValues: { residentId: '', unitId: '', type: 'monthly_fee', amount: 0, dueDate: '' },
   })
 
   return (
@@ -61,6 +61,7 @@ function CreateBillButton() {
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                     <SelectContent>
+                      <SelectItem value="monthly_fee">Monthly Fee</SelectItem>
                       <SelectItem value="maintenance_fee">Maintenance Fee</SelectItem>
                       <SelectItem value="utility">Utility</SelectItem>
                       <SelectItem value="parking">Parking</SelectItem>
@@ -103,8 +104,8 @@ function BillsTab() {
   const bills = data?.data ?? []
 
   const columns: ColumnDef<Bill>[] = [
-    { id: 'resident', header: 'Resident', cell: ({ row }) => row.original.resident.name },
-    { id: 'unit', header: 'Unit', cell: ({ row }) => row.original.unit.number },
+    { id: 'resident', header: 'Resident', cell: ({ row }) => row.original.resident?.name ?? <span className="text-[var(--text-muted)]">—</span> },
+    { id: 'unit', header: 'Unit', cell: ({ row }) => row.original.unit?.number ?? <span className="text-[var(--text-muted)]">—</span> },
     { accessorKey: 'type', header: 'Type', cell: ({ row }) => <span className="capitalize">{row.original.type.replace('_', ' ')}</span> },
     { accessorKey: 'amount', header: 'Amount', cell: ({ row }) => formatCurrency(row.original.amount) },
     { accessorKey: 'dueDate', header: 'Due Date', cell: ({ row }) => formatDate(row.original.dueDate) },

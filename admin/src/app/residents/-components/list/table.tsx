@@ -61,7 +61,7 @@ export const residentColumns: ColumnDef<Resident>[] = [
     header: '',
     cell: ({ row }) => (
       <div className="w-8 h-8 rounded-full bg-[var(--primary-light)] flex items-center justify-center text-[var(--primary)] text-xs font-bold">
-        {getInitials(row.original.name)}
+        {getInitials(row.original.name ?? '')}
       </div>
     ),
     enableSorting: false,
@@ -71,8 +71,8 @@ export const residentColumns: ColumnDef<Resident>[] = [
     header: 'Name',
     cell: ({ row }) => (
       <div>
-        <p className="font-semibold text-[var(--text)]">{row.original.name}</p>
-        <p className="text-xs text-[var(--text-muted)]">{row.original.email}</p>
+        <p className="font-semibold text-[var(--text)]">{row.original.name ?? '—'}</p>
+        <p className="text-xs text-[var(--text-muted)]">{row.original.email ?? ''}</p>
       </div>
     ),
   },
@@ -85,8 +85,8 @@ export const residentColumns: ColumnDef<Resident>[] = [
     header: 'Unit(s)',
     cell: ({ row }) => (
       <div className="flex flex-wrap gap-1">
-        {row.original.units.length ? (
-          row.original.units.map((u) => (
+        {(row.original.units ?? []).length ? (
+          (row.original.units ?? []).map((u) => (
             <Badge key={u.id} variant="secondary" className="text-xs">
               {u.number}
             </Badge>
@@ -101,15 +101,15 @@ export const residentColumns: ColumnDef<Resident>[] = [
     accessorKey: 'role',
     header: 'Role',
     cell: ({ row }) => (
-      <span className="capitalize text-sm">{row.original.role}</span>
+      <span className="capitalize text-sm">{row.original.role ?? 'resident'}</span>
     ),
   },
   {
     accessorKey: 'status',
     header: 'Status',
     cell: ({ row }) => (
-      <Badge variant={statusVariant[row.original.status] ?? 'secondary'}>
-        {row.original.status}
+      <Badge variant={statusVariant[row.original.status ?? 'inactive'] ?? 'secondary'}>
+        {row.original.status ?? 'unknown'}
       </Badge>
     ),
   },
@@ -117,7 +117,7 @@ export const residentColumns: ColumnDef<Resident>[] = [
     accessorKey: 'createdAt',
     header: 'Joined',
     cell: ({ row }) => (
-      <span className="text-sm text-[var(--text-muted)]">{formatDate(row.original.createdAt)}</span>
+      <span className="text-sm text-[var(--text-muted)]">{row.original.createdAt ? formatDate(row.original.createdAt) : '—'}</span>
     ),
   },
   {

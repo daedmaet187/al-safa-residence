@@ -267,7 +267,7 @@ export class AdminService {
       ...b,
       resident: { id: b.user.id, name: b.user.name, email: b.user.email, role: 'resident' },
       status: b.status.toLowerCase() as any,
-      type: b.type.toLowerCase().replace('_', '-') as any,  // billing uses dash: monthly-fee
+      type: b.type.toLowerCase() as any,
     }));
     return paginate(mapped, count, skip, take);
   }
@@ -329,7 +329,7 @@ export class AdminService {
       bill: {
         ...p.bill,
         resident: { id: p.bill.user.id, name: p.bill.user.name, role: 'resident' },
-        type: p.bill.type.toLowerCase().replace('_', '-'),  // billing uses dash
+        type: p.bill.type.toLowerCase(),
       },
     }));
     return paginate(mapped, count, skip, take);
@@ -600,7 +600,7 @@ export class AdminService {
 
     return {
       byCategory: byCategoryRaw.map((r) => ({ category: r.category, count: r._count.id })),
-      byStatus: byStatusRaw.map((r) => ({ status: r.status, count: r._count.id })),
+      byStatus: byStatusRaw.map((r) => ({ status: r.status.toLowerCase(), count: r._count.id })),
       avgResolutionDays: Math.round(avgResolutionDays * 10) / 10,
       // legacy flat fields
       total: byStatusRaw.reduce((s, r) => s + r._count.id, 0),

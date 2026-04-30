@@ -161,7 +161,7 @@ const staffColumns: ColumnDef<StaffMember>[] = [
     header: '',
     cell: ({ row }) => (
       <div className="w-8 h-8 rounded-full bg-[var(--sidebar)] flex items-center justify-center text-white text-xs font-bold">
-        {getInitials(row.original.name)}
+        {getInitials(row.original.name ?? '')}
       </div>
     ),
     enableSorting: false,
@@ -171,8 +171,8 @@ const staffColumns: ColumnDef<StaffMember>[] = [
     header: 'Name',
     cell: ({ row }) => (
       <div>
-        <p className="font-semibold text-[var(--text)]">{row.original.name}</p>
-        <p className="text-xs text-[var(--text-muted)]">{row.original.email}</p>
+        <p className="font-semibold text-[var(--text)]">{row.original.name ?? '—'}</p>
+        <p className="text-xs text-[var(--text-muted)]">{row.original.email ?? ''}</p>
       </div>
     ),
   },
@@ -181,7 +181,7 @@ const staffColumns: ColumnDef<StaffMember>[] = [
     header: 'Role',
     cell: ({ row }) => (
       <Badge variant={row.original.role === 'admin' ? 'default' : 'secondary'}>
-        {row.original.role}
+        {row.original.role ?? 'staff'}
       </Badge>
     ),
   },
@@ -190,14 +190,14 @@ const staffColumns: ColumnDef<StaffMember>[] = [
     header: 'Status',
     cell: ({ row }) => (
       <Badge variant={row.original.status === 'active' ? 'success' : 'secondary'}>
-        {row.original.status}
+        {row.original.status ?? 'unknown'}
       </Badge>
     ),
   },
   {
     accessorKey: 'createdAt',
     header: 'Added',
-    cell: ({ row }) => <span className="text-sm text-[var(--text-muted)]">{formatDate(row.original.createdAt)}</span>,
+    cell: ({ row }) => <span className="text-sm text-[var(--text-muted)]">{row.original.createdAt ? formatDate(row.original.createdAt) : '—'}</span>,
   },
   {
     id: 'actions',

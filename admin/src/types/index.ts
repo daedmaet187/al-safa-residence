@@ -4,7 +4,7 @@ export type UserStatus = 'active' | 'inactive' | 'suspended' | 'pending'
 export type UnitType = 'apartment' | 'villa' | 'penthouse' | 'studio'
 export type UnitStatus = 'occupied' | 'vacant' | 'maintenance'
 
-export type BillType = 'maintenance_fee' | 'utility' | 'parking' | 'amenity' | 'other'
+export type BillType = 'monthly_fee' | 'utilities' | 'maintenance_fee' | 'parking' | 'other'
 export type BillStatus = 'pending' | 'paid' | 'overdue' | 'cancelled'
 
 export type MaintenanceCategory = 'plumbing' | 'electrical' | 'hvac' | 'structural' | 'cleaning' | 'other'
@@ -140,6 +140,7 @@ export interface Announcement {
   title: string
   body: string
   isImportant: boolean
+  priority?: 'normal' | 'urgent'
   expiresAt?: string
   createdAt: string
   updatedAt: string
