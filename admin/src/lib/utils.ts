@@ -6,12 +6,16 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatDate(date: string | Date, opts?: Intl.DateTimeFormatOptions) {
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    ...opts,
-  }).format(new Date(date))
+  try {
+    // dateStyle/timeStyle cannot be mixed with year/month/day — use opts as-is if they're present
+    const hasStyleShorthand = opts?.dateStyle || opts?.timeStyle
+    const finalOpts: Intl.DateTimeFormatOptions = hasStyleShorthand
+      ? opts!
+      : { year: 'numeric', month: 'short', day: 'numeric', ...opts }
+    return new Intl.DateTimeFormat('en-US', finalOpts).format(new Date(date))
+  } catch {
+    return String(date).slice(0, 10)
+  }
 }
 
 export function formatCurrency(amount: number, currency?: string) {
