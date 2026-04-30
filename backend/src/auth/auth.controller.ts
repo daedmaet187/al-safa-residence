@@ -16,6 +16,7 @@ import {
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RefreshDto } from './dto/refresh.dto';
+import { SendOtpDto, VerifyOtpDto } from './dto/verify-otp.dto';
 import { AuthResponseDto } from './dto/auth-response.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { User } from '../common/decorators/user.decorator';
@@ -24,6 +25,21 @@ import { User } from '../common/decorators/user.decorator';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  @Post('send-otp')
+  @ApiOperation({ summary: 'Send OTP to email (stub)' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'OTP sent' })
+  async sendOtp(@Body(ValidationPipe) dto: SendOtpDto) {
+    return this.authService.sendOtp(dto.email);
+  }
+
+  @Post('verify-otp')
+  @ApiOperation({ summary: 'Verify OTP and get tokens (default OTP: 123456)' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Tokens + user info' })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Invalid OTP' })
+  async verifyOtp(@Body(ValidationPipe) dto: VerifyOtpDto) {
+    return this.authService.verifyOtp(dto.email, dto.otp);
+  }
 
   @Post('login')
   @ApiOperation({ summary: 'Login with email and password' })

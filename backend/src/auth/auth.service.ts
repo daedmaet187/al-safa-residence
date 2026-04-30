@@ -64,6 +64,60 @@ export class AuthService {
     return tokens;
   }
 
+  async sendOtp(email: string) {
+    // Stub: OTP sending not implemented yet
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user || user.deletedAt || !user.isActive) {
+      throw new UnauthorizedException('User not found');
+    }
+    return { message: 'OTP sent' };
+  }
+
+  async verifyOtp(email: string, otp: string) {
+    // Default OTP for development/testing
+    const DEFAULT_OTP = '123456';
+
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+      include: {
+        unitAssignments: {
+          include: { unit: true },
+          where: { endDate: null },
+        },
+      },
+    });
+
+    if (!user || user.deletedAt || !user.isActive) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if (otp !== DEFAULT_OTP) {
+      throw new UnauthorizedException('Invalid OTP');
+    }
+
+    const tokens = await this.generateTokens(user.id, user.email, user.role);
+
+    const units = user.unitAssignments.map((a) => ({
+      id: a.unit.id,
+      number: a.unit.number,
+      floor: a.unit.floor,
+      building: a.unit.building,
+      type: a.unit.type,
+      area: a.unit.area,
+      bedrooms: a.unit.bedrooms,
+      bathrooms: a.unit.bathrooms,
+      parkingSpot: a.unit.parkingSpot,
+      isPrimary: a.isPrimary,
+    }));
+
+    return {
+      ...tokens,
+      role: user.role,
+      user: { id: user.id, email: user.email, name: user.name, role: user.role },
+      units,
+    };
+  }
+
   async logout(refreshToken: string) {
     await this.prisma.refreshToken.deleteMany({ where: { token: refreshToken } });
     return { message: 'Logged out successfully' };
