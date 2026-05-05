@@ -30,6 +30,21 @@ class _FakeStorage extends SecureStorageService {
   Future<void> setActiveUnitId(String id) async => _d['active_unit_id'] = id;
 
   @override
+  Future<String?> getActorType() async => _d['actor_type'];
+  @override
+  Future<void> setActorType(String v) async => _d['actor_type'] = v;
+
+  @override
+  Future<String?> getAccessLevel() async => _d['access_level'];
+  @override
+  Future<void> setAccessLevel(String v) async => _d['access_level'] = v;
+
+  @override
+  Future<String?> getPrimaryUserId() async => _d['primary_user_id'];
+  @override
+  Future<void> setPrimaryUserId(String id) async => _d['primary_user_id'] = id;
+
+  @override
   Future<void> clearAll() async => _d.clear();
 }
 
@@ -78,6 +93,8 @@ void main() {
             'accessToken': 'acc-tok',
             'refreshToken': 'ref-tok',
             'role': 'resident',
+            'actorType': 'resident',
+            'accessLevel': 'FULL',
             'user': _testUser,
             'units': <dynamic>[],
           },
