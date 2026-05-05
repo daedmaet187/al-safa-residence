@@ -72,6 +72,6 @@ export class AuthController {
   @ApiOperation({ summary: 'Get current user profile with units' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Current user + units' })
   async me(@User() user: any) {
-    return this.authService.getMe(user.id);
+    return this.authService.getMe(user.id, user.actorType);
   }
 }

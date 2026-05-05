@@ -24,12 +24,14 @@ import { AnnouncementsService } from './announcements.service';
 import { CreateAnnouncementDto } from './dto/create-announcement.dto';
 import { UpdateAnnouncementDto } from './dto/update-announcement.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { HouseholdAccessGuard } from '../auth/guards/household-access.guard';
+import { RequireAccess } from '../auth/decorators/require-access.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 
 @ApiTags('announcements')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, HouseholdAccessGuard)
 @Controller('announcements')
 export class AnnouncementsController {
   constructor(private readonly announcementsService: AnnouncementsService) {}
@@ -43,6 +45,7 @@ export class AnnouncementsController {
   }
 
   @Get()
+  @RequireAccess('LIMITED')
   @ApiOperation({ summary: 'List announcements (all authenticated)' })
   @ApiQuery({ name: 'skip', required: false, type: Number })
   @ApiQuery({ name: 'take', required: false, type: Number })
@@ -55,6 +58,7 @@ export class AnnouncementsController {
   }
 
   @Get(':id')
+  @RequireAccess('LIMITED')
   @ApiOperation({ summary: 'Get announcement detail' })
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Announcement detail' })

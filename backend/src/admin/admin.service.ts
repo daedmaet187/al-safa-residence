@@ -688,4 +688,53 @@ export class AdminService {
       approvedScans,
     };
   }
+
+  // ── Household Members ──────────────────────────────────────────────────────
+
+  async getHouseholdMembersForUnit(unitId: string) {
+    // Find the primary resident for this unit
+    const assignment = await this.prisma.unitAssignment.findFirst({
+      where: { unitId, endDate: null, isPrimary: true },
+      include: { user: true },
+    });
+
+    if (!assignment) {
+      return { members: [], primaryResident: null };
+    }
+
+    const members = await this.prisma.householdMember.findMany({
+      where: { primaryUserId: assignment.userId },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    return {
+      members,
+      primaryResident: { id: assignment.user.id, name: assignment.user.name },
+    };
+  }
+
+  async deactivateHouseholdMember(unitId: string, memberId: string) {
+    // Verify the member belongs to a resident of this unit
+    const member = await this.prisma.householdMember.findUnique({
+      where: { id: memberId },
+      include: {
+        primaryUser: {
+          include: {
+            unitAssignments: { where: { unitId, endDate: null } },
+          },
+        },
+      },
+    });
+
+    if (!member || member.primaryUser.unitAssignments.length === 0) {
+      throw new NotFoundException('Household member not found for this unit');
+    }
+
+    await this.prisma.householdMember.update({
+      where: { id: memberId },
+      data: { isActive: false },
+    });
+
+    return { message: 'Household member deactivated' };
+  }
 }

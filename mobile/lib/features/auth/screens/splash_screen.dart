@@ -32,6 +32,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
           final role = state.user?.role ?? '';
           if (role.toUpperCase() == 'SECURITY') {
             context.go('/security');
+          } else if (state.isHouseholdMember) {
+            context.go('/household-home');
           } else {
             context.go('/home');
           }

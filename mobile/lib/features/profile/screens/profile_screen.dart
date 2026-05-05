@@ -106,6 +106,15 @@ class ProfileScreen extends ConsumerWidget {
             onTap: () {},
           ),
           Consumer(builder: (ctx, ref, _) {
+            final authState = ref.watch(authProvider).value;
+            if (authState?.isResident != true) return const SizedBox.shrink();
+            return _SectionTile(
+              icon: Icons.people_alt_outlined,
+              title: 'Household Members',
+              onTap: () => context.push('/home/household-members'),
+            );
+          }),
+          Consumer(builder: (ctx, ref, _) {
             final themeMode = ref.watch(themeModeProvider);
             final isDarkNow = themeMode == ThemeMode.dark ||
                 (themeMode == ThemeMode.system &&

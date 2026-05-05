@@ -40,6 +40,10 @@ export const queryKeys = {
     list: (params?: Record<string, unknown>) => ['staff', 'list', params] as const,
     detail: (id: string) => ['staff', 'detail', id] as const,
   },
+  householdMembers: {
+    all: ['household-members'] as const,
+    byUnit: (unitId: string) => ['household-members', 'unit', unitId] as const,
+  },
   reports: {
     all: ['reports'] as const,
     maintenance: () => ['reports', 'maintenance'] as const,

@@ -146,6 +146,20 @@ export interface Announcement {
   updatedAt: string
 }
 
+export type HouseholdAccessLevel = 'FULL' | 'LIMITED'
+
+export interface HouseholdMember {
+  id: string
+  primaryUserId: string
+  phone: string
+  name: string
+  relationship: string
+  accessLevel: HouseholdAccessLevel
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
 export interface StaffMember {
   id: string
   name: string

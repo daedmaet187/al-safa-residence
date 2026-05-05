@@ -65,7 +65,7 @@ class _BiometricScreenState extends ConsumerState<BiometricScreen> {
         ),
       );
       if (authenticated && mounted) {
-        context.go('/home');
+        await _goHome();
       } else if (mounted) {
         // User cancelled — show PIN fallback
         setState(() { _isLoading = false; _showPinFallback = true; });
@@ -79,7 +79,7 @@ class _BiometricScreenState extends ConsumerState<BiometricScreen> {
     setState(() => _isLoading = true);
     try {
       final canCheck = await _localAuth.canCheckBiometrics;
-      if (!canCheck) { _skip(); return; }
+      if (!canCheck) { await _skip(); return; }
       final authenticated = await _localAuth.authenticate(
         localizedReason: 'Enable biometric login for quick access',
         options: const AuthenticationOptions(biometricOnly: true, stickyAuth: true),
@@ -87,18 +87,30 @@ class _BiometricScreenState extends ConsumerState<BiometricScreen> {
       if (authenticated && mounted) {
         final storage = ref.read(secureStorageProvider);
         await storage.setHasBiometricSetup();
-        if (mounted) context.go('/home');
+        if (mounted) await _goHome();
       } else if (mounted) {
-        _skip();
+        await _skip();
       }
     } catch (_) {
-      if (mounted) _skip();
+      if (mounted) await _skip();
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  void _skip() => context.go('/home');
+  Future<void> _skip() => _goHome();
+
+  Future<void> _goHome() async {
+    if (!mounted) return;
+    final storage = ref.read(secureStorageProvider);
+    final actorType = await storage.getActorType() ?? 'resident';
+    if (!mounted) return;
+    if (actorType == 'household_member') {
+      context.go('/household-home');
+    } else {
+      context.go('/home');
+    }
+  }
 
   // Simple 4-digit PIN — uses last 4 of phone number stored in secure storage
   Future<void> _verifyPin() async {
@@ -106,7 +118,7 @@ class _BiometricScreenState extends ConsumerState<BiometricScreen> {
     // PIN = last 4 digits of stored auth token hash (simple demo PIN: 1234)
     // In production this would be a real stored PIN
     if (pin == '1234') {
-      if (mounted) context.go('/home');
+      if (mounted) await _goHome();
     } else {
       setState(() => _pinError = 'Incorrect PIN. Try again.');
       _pinCtrl.clear();

@@ -7,6 +7,9 @@ const _kUserRole = 'user_role';
 const _kActiveUnitId = 'active_unit_id';
 const _kHasSeenOnboarding = 'has_seen_onboarding';
 const _kHasBiometricSetup = 'has_biometric_setup';
+const _kActorType = 'actor_type';
+const _kAccessLevel = 'access_level';
+const _kPrimaryUserId = 'primary_user_id';
 
 final secureStorageProvider = Provider<SecureStorageService>((ref) {
   return SecureStorageService();
@@ -39,6 +42,15 @@ class SecureStorageService {
   }
   Future<void> setHasSeenOnboarding() =>
       _storage.write(key: _kHasSeenOnboarding, value: 'true');
+
+  Future<String?> getActorType() => _storage.read(key: _kActorType);
+  Future<void> setActorType(String v) => _storage.write(key: _kActorType, value: v);
+
+  Future<String?> getAccessLevel() => _storage.read(key: _kAccessLevel);
+  Future<void> setAccessLevel(String v) => _storage.write(key: _kAccessLevel, value: v);
+
+  Future<String?> getPrimaryUserId() => _storage.read(key: _kPrimaryUserId);
+  Future<void> setPrimaryUserId(String id) => _storage.write(key: _kPrimaryUserId, value: id);
 
   Future<bool> getHasBiometricSetup() async {
     final v = await _storage.read(key: _kHasBiometricSetup);

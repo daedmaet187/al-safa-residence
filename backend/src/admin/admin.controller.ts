@@ -258,5 +258,22 @@ export class AdminController {
     return this.adminService.getGateReport();
   }
 
+  // ── Household Members ──────────────────────────────────────────────────────
+
+  @Get('units/:unitId/household-members')
+  @ApiOperation({ summary: 'List household members for a unit' })
+  getHouseholdMembersForUnit(@Param('unitId') unitId: string) {
+    return this.adminService.getHouseholdMembersForUnit(unitId);
+  }
+
+  @Patch('units/:unitId/household-members/:id')
+  @ApiOperation({ summary: 'Deactivate a household member (admin)' })
+  deactivateHouseholdMember(
+    @Param('unitId') unitId: string,
+    @Param('id') id: string,
+  ) {
+    return this.adminService.deactivateHouseholdMember(unitId, id);
+  }
+
 }
 

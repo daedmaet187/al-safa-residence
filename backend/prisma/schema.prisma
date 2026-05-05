@@ -21,12 +21,13 @@ model User {
   updatedAt    DateTime  @updatedAt
   deletedAt    DateTime?
 
-  unitAssignments UnitAssignment[]
-  maintenance     MaintenanceRequest[]
-  bills           Bill[]
-  guestPasses     GuestPass[]
-  deviceTokens    DeviceToken[]
-  payments        Payment[]
+  unitAssignments  UnitAssignment[]
+  maintenance      MaintenanceRequest[]
+  bills            Bill[]
+  guestPasses      GuestPass[]
+  deviceTokens     DeviceToken[]
+  payments         Payment[]
+  householdMembers HouseholdMember[]
 
   @@map("users")
 }
@@ -74,22 +75,24 @@ model UnitAssignment {
 }
 
 model MaintenanceRequest {
-  id          String              @id @default(uuid())
-  userId      String
-  unitId      String
-  title       String
-  description String
-  category    MaintenanceCategory
-  status      MaintenanceStatus   @default(PENDING)
-  priority    Priority            @default(NORMAL)
-  photoUrls   String[]
-  notes       String?
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
-  resolvedAt  DateTime?
+  id                String              @id @default(uuid())
+  userId            String
+  unitId            String
+  householdMemberId String?
+  title             String
+  description       String
+  category          MaintenanceCategory
+  status            MaintenanceStatus   @default(PENDING)
+  priority          Priority            @default(NORMAL)
+  photoUrls         String[]
+  notes             String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  resolvedAt        DateTime?
 
-  user User @relation(fields: [userId], references: [id])
-  unit Unit @relation(fields: [unitId], references: [id])
+  user            User             @relation(fields: [userId], references: [id])
+  unit            Unit             @relation(fields: [unitId], references: [id])
+  householdMember HouseholdMember? @relation(fields: [householdMemberId], references: [id])
 
   @@map("maintenance_requests")
 }
@@ -201,21 +204,23 @@ model Announcement {
 }
 
 model GuestPass {
-  id         String          @id @default(uuid())
-  userId     String
-  guestName  String
-  guestPhone String?
-  guestId    String?
-  purpose    String?
-  qrCode     String          @unique
-  status     GuestPassStatus @default(ACTIVE)
-  validFrom  DateTime        @default(now())
-  validUntil DateTime?
-  usedAt     DateTime?
-  createdAt  DateTime        @default(now())
+  id                String          @id @default(uuid())
+  userId            String
+  householdMemberId String?
+  guestName         String
+  guestPhone        String?
+  guestId           String?
+  purpose           String?
+  qrCode            String          @unique
+  status            GuestPassStatus @default(ACTIVE)
+  validFrom         DateTime        @default(now())
+  validUntil        DateTime?
+  usedAt            DateTime?
+  createdAt         DateTime        @default(now())
 
-  user    User      @relation(fields: [userId], references: [id])
-  gateLog GateLog[]
+  user            User             @relation(fields: [userId], references: [id])
+  householdMember HouseholdMember? @relation(fields: [householdMemberId], references: [id])
+  gateLog         GateLog[]
 
   @@map("guest_passes")
 }
@@ -260,4 +265,40 @@ model RefreshToken {
   createdAt DateTime @default(now())
 
   @@map("refresh_tokens")
+}
+
+enum HouseholdAccess {
+  FULL
+  LIMITED
+}
+
+model HouseholdMember {
+  id            String          @id @default(uuid())
+  primaryUserId String
+  phone         String          @unique
+  name          String
+  relationship  String
+  accessLevel   HouseholdAccess @default(LIMITED)
+  isActive      Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  primaryUser         User                   @relation(fields: [primaryUserId], references: [id])
+  deviceTokens        HouseholdDeviceToken[]
+  guestPasses         GuestPass[]
+  maintenanceRequests MaintenanceRequest[]
+
+  @@map("household_members")
+}
+
+model HouseholdDeviceToken {
+  id                String          @id @default(uuid())
+  householdMemberId String
+  token             String          @unique
+  platform          String
+  createdAt         DateTime        @default(now())
+
+  householdMember HouseholdMember @relation(fields: [householdMemberId], references: [id])
+
+  @@map("household_device_tokens")
 }

@@ -1,13 +1,18 @@
 import { useState } from 'react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { DataTable } from '@/components/data-table'
 import { CreateUnitButton } from './-components/create-button'
 import { unitColumns } from './-components/list/table'
 import { useUnitList } from './-components/list/service'
+import { HouseholdMembersSection } from './-components/household-members'
+import type { Unit } from '@/types'
 
 export default function UnitsPage() {
   const [typeFilter, setTypeFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null)
 
   const params = {
     ...(typeFilter !== 'all' && { type: typeFilter }),
@@ -16,6 +21,24 @@ export default function UnitsPage() {
 
   const { data, isLoading } = useUnitList(params)
   const units = data?.data ?? []
+
+  const columnsWithAction = [
+    ...unitColumns,
+    {
+      id: 'household',
+      header: '',
+      cell: ({ row }: { row: { original: Unit } }) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-[var(--text-muted)] hover:text-[var(--text)]"
+          onClick={() => setSelectedUnit(row.original)}
+        >
+          Members
+        </Button>
+      ),
+    },
+  ]
 
   return (
     <div className="space-y-5">
@@ -54,11 +77,28 @@ export default function UnitsPage() {
       </div>
 
       <DataTable
-        columns={unitColumns}
+        columns={columnsWithAction}
         data={units}
         searchPlaceholder="Search by unit number, building..."
         isLoading={isLoading}
       />
+
+      <Dialog
+        open={selectedUnit !== null}
+        onOpenChange={(open) => { if (!open) setSelectedUnit(null) }}
+      >
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>
+              Unit {selectedUnit?.number}
+              {selectedUnit?.building ? ` — ${selectedUnit.building}` : ''}
+            </DialogTitle>
+          </DialogHeader>
+          {selectedUnit && (
+            <HouseholdMembersSection unitId={selectedUnit.id} />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

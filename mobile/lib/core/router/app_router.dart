@@ -8,6 +8,7 @@ import '../../features/auth/screens/biometric_screen.dart';
 import '../../features/auth/screens/onboarding_screen.dart';
 import '../../features/auth/screens/multi_unit_screen.dart';
 import '../../features/home/screens/home_screen.dart';
+import '../../features/home/household_home_screen.dart';
 import '../../features/payments/screens/payments_screen.dart';
 import '../../features/payments/screens/bill_detail_screen.dart';
 import '../../features/payments/screens/payment_method_screen.dart';
@@ -22,6 +23,8 @@ import '../../features/community/screens/community_screen.dart';
 import '../../features/community/screens/announcement_detail_screen.dart';
 import '../../features/unit/screens/unit_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
+import '../../features/profile/household_members/household_members_screen.dart';
+import '../../features/profile/household_members/member_detail_screen.dart';
 import '../../features/security/screens/security_home_screen.dart';
 import '../../features/security/screens/security_login_screen.dart';
 import '../../features/security/screens/qr_scan_screen.dart';
@@ -73,6 +76,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/unit-setup',
         builder: (context, state) => const MultiUnitScreen(),
+      ),
+
+      // ── Household member home (simplified, no shell) ────────────────────────
+      GoRoute(
+        path: '/household-home',
+        builder: (context, state) => const HouseholdHomeScreen(),
       ),
 
       // ── Home Shell (with bottom nav) ────────────────────────────────────────
@@ -152,6 +161,17 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/home/unit-switcher',
         builder: (context, state) => const MultiUnitScreen(),
+      ),
+
+      // ── Household Members management (primary resident only) ─────────────────
+      GoRoute(
+        path: '/home/household-members',
+        builder: (context, state) => const HouseholdMembersScreen(),
+      ),
+      GoRoute(
+        path: '/home/household-members/:id',
+        builder: (context, state) =>
+            MemberDetailScreen(memberId: state.pathParameters['id']!),
       ),
 
       // ── Security Guard ───────────────────────────────────────────────────────

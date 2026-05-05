@@ -11,13 +11,23 @@ class AuthState {
   final User? user;
   final List<ResidenceUnit> units;
   final String? activeUnitId;
+  final String actorType;
+  final String accessLevel;
+  final String? primaryUserId;
 
   const AuthState({
     this.status = AuthStatus.initial,
     this.user,
     this.units = const [],
     this.activeUnitId,
+    this.actorType = 'resident',
+    this.accessLevel = 'FULL',
+    this.primaryUserId,
   });
+
+  bool get isHouseholdMember => actorType == 'household_member';
+  bool get isResident => actorType == 'resident';
+  bool get hasFullAccess => accessLevel == 'FULL' || actorType == 'resident';
 
   ResidenceUnit? get activeUnit {
     if (activeUnitId == null) return units.isEmpty ? null : units.first;
@@ -33,12 +43,18 @@ class AuthState {
     User? user,
     List<ResidenceUnit>? units,
     String? activeUnitId,
+    String? actorType,
+    String? accessLevel,
+    String? primaryUserId,
   }) =>
       AuthState(
         status: status ?? this.status,
         user: user ?? this.user,
         units: units ?? this.units,
         activeUnitId: activeUnitId ?? this.activeUnitId,
+        actorType: actorType ?? this.actorType,
+        accessLevel: accessLevel ?? this.accessLevel,
+        primaryUserId: primaryUserId ?? this.primaryUserId,
       );
 }
 
@@ -50,30 +66,37 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     if (token == null) {
       return const AuthState(status: AuthStatus.unauthenticated);
     }
-    // Try to load current user
     try {
       final dio = ref.read(dioProvider);
       final resp = await dio.get('/auth/me');
       final data = resp.data as Map<String, dynamic>;
-      // /auth/me returns {user, units} — handle both formats gracefully
       final userData = data.containsKey('user')
           ? data['user'] as Map<String, dynamic>
-          : data; // fallback: data IS the user object
+          : data;
       final user = User.fromJson(userData);
       final unitsData = data['units'] as List<dynamic>? ?? [];
       final units = unitsData
           .map((e) => ResidenceUnit.fromJson(e as Map<String, dynamic>))
           .toList();
       final activeUnitId = await storage.getActiveUnitId();
+      final actorType = data['actorType'] as String? ?? 'resident';
+      final accessLevel = data['accessLevel'] as String? ?? 'FULL';
+      final primaryUserId = data['primaryUserId'] as String?;
+
+      await storage.setActorType(actorType);
+      await storage.setAccessLevel(accessLevel.toString());
+      if (primaryUserId != null) await storage.setPrimaryUserId(primaryUserId);
+
       return AuthState(
         status: AuthStatus.authenticated,
         user: user,
         units: units,
         activeUnitId: activeUnitId,
+        actorType: actorType,
+        accessLevel: accessLevel.toString(),
+        primaryUserId: primaryUserId,
       );
     } catch (_) {
-      // Don't wipe storage on network errors — just return unauthenticated
-      // so user can retry. Only clear if token is explicitly invalid (401).
       return const AuthState(status: AuthStatus.unauthenticated);
     }
   }
@@ -97,11 +120,17 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
 
     final token = resp.data['accessToken'] as String;
     final refreshToken = resp.data['refreshToken'] as String;
-    final role = resp.data['role'] as String? ?? 'resident';
+    final role = resp.data['role'] as String? ?? 'RESIDENT';
+    final actorType = resp.data['actorType'] as String? ?? 'resident';
+    final accessLevel = (resp.data['accessLevel'] ?? 'FULL').toString();
+    final primaryUserId = resp.data['primaryUserId'] as String?;
 
     await storage.setAuthToken(token);
     await storage.setRefreshToken(refreshToken);
     await storage.setUserRole(role);
+    await storage.setActorType(actorType);
+    await storage.setAccessLevel(accessLevel);
+    if (primaryUserId != null) await storage.setPrimaryUserId(primaryUserId);
 
     final user = User.fromJson(resp.data['user'] as Map<String, dynamic>);
     final unitsData = resp.data['units'] as List<dynamic>? ?? [];
@@ -113,6 +142,9 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
       status: AuthStatus.authenticated,
       user: user,
       units: units,
+      actorType: actorType,
+      accessLevel: accessLevel,
+      primaryUserId: primaryUserId,
     ));
   }
 

@@ -24,19 +24,22 @@ import { CreateMaintenanceDto } from './dto/create-maintenance.dto';
 import { UpdateMaintenanceStatusDto } from './dto/update-status.dto';
 import { AddPhotosDto } from './dto/add-photos.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { HouseholdAccessGuard } from '../auth/guards/household-access.guard';
+import { RequireAccess } from '../auth/decorators/require-access.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { User } from '../common/decorators/user.decorator';
 
 @ApiTags('maintenance')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, HouseholdAccessGuard)
 @Controller('maintenance')
 export class MaintenanceController {
   constructor(private readonly maintenanceService: MaintenanceService) {}
 
   @Post()
   @Roles(Role.RESIDENT, Role.ADMIN)
+  @RequireAccess('FULL')
   @ApiOperation({ summary: 'Submit a maintenance request' })
   @ApiResponse({ status: HttpStatus.CREATED, description: 'Request created' })
   async create(@Body(ValidationPipe) dto: CreateMaintenanceDto, @User() user: any) {
@@ -44,6 +47,7 @@ export class MaintenanceController {
   }
 
   @Get()
+  @RequireAccess('FULL')
   @ApiOperation({ summary: 'List maintenance requests (admin: all, resident: own)' })
   @ApiQuery({ name: 'skip', required: false, type: Number })
   @ApiQuery({ name: 'take', required: false, type: Number })
@@ -60,6 +64,7 @@ export class MaintenanceController {
   }
 
   @Get(':id')
+  @RequireAccess('FULL')
   @ApiOperation({ summary: 'Get maintenance request detail' })
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Request detail' })
