@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../auth/providers/auth_provider.dart';
+import '../auth/providers/auth_provider.dart';
 
 class HouseholdHomeScreen extends ConsumerWidget {
   const HouseholdHomeScreen({super.key});
