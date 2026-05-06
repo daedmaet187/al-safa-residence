@@ -51,4 +51,9 @@ export const queryKeys = {
     occupancy: () => ['reports', 'occupancy'] as const,
     gate: () => ['reports', 'gate'] as const,
   },
+  conversations: {
+    all: ['conversations'] as const,
+    list: (params?: Record<string, unknown>) => ['conversations', 'list', params] as const,
+    detail: (id: string) => ['conversations', 'detail', id] as const,
+  },
 }

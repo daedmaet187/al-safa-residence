@@ -18,6 +18,7 @@ import { Route as LayoutResidentsIndexRouteImport } from './routes/_layout/resid
 import { Route as LayoutReportsIndexRouteImport } from './routes/_layout/reports/index'
 import { Route as LayoutMaintenanceIndexRouteImport } from './routes/_layout/maintenance/index'
 import { Route as LayoutGateIndexRouteImport } from './routes/_layout/gate/index'
+import { Route as LayoutConversationsIndexRouteImport } from './routes/_layout/conversations/index'
 import { Route as LayoutBillingIndexRouteImport } from './routes/_layout/billing/index'
 import { Route as LayoutAnnouncementsIndexRouteImport } from './routes/_layout/announcements/index'
 
@@ -65,6 +66,12 @@ const LayoutGateIndexRoute = LayoutGateIndexRouteImport.update({
   path: '/gate/',
   getParentRoute: () => LayoutRouteRoute,
 } as any)
+const LayoutConversationsIndexRoute =
+  LayoutConversationsIndexRouteImport.update({
+    id: '/conversations/',
+    path: '/conversations/',
+    getParentRoute: () => LayoutRouteRoute,
+  } as any)
 const LayoutBillingIndexRoute = LayoutBillingIndexRouteImport.update({
   id: '/billing/',
   path: '/billing/',
@@ -82,6 +89,7 @@ export interface FileRoutesByFullPath {
   '/login/': typeof LoginIndexRoute
   '/announcements/': typeof LayoutAnnouncementsIndexRoute
   '/billing/': typeof LayoutBillingIndexRoute
+  '/conversations/': typeof LayoutConversationsIndexRoute
   '/gate/': typeof LayoutGateIndexRoute
   '/maintenance/': typeof LayoutMaintenanceIndexRoute
   '/reports/': typeof LayoutReportsIndexRoute
@@ -94,6 +102,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginIndexRoute
   '/announcements': typeof LayoutAnnouncementsIndexRoute
   '/billing': typeof LayoutBillingIndexRoute
+  '/conversations': typeof LayoutConversationsIndexRoute
   '/gate': typeof LayoutGateIndexRoute
   '/maintenance': typeof LayoutMaintenanceIndexRoute
   '/reports': typeof LayoutReportsIndexRoute
@@ -108,6 +117,7 @@ export interface FileRoutesById {
   '/login/': typeof LoginIndexRoute
   '/_layout/announcements/': typeof LayoutAnnouncementsIndexRoute
   '/_layout/billing/': typeof LayoutBillingIndexRoute
+  '/_layout/conversations/': typeof LayoutConversationsIndexRoute
   '/_layout/gate/': typeof LayoutGateIndexRoute
   '/_layout/maintenance/': typeof LayoutMaintenanceIndexRoute
   '/_layout/reports/': typeof LayoutReportsIndexRoute
@@ -122,6 +132,7 @@ export interface FileRouteTypes {
     | '/login/'
     | '/announcements/'
     | '/billing/'
+    | '/conversations/'
     | '/gate/'
     | '/maintenance/'
     | '/reports/'
@@ -134,6 +145,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/announcements'
     | '/billing'
+    | '/conversations'
     | '/gate'
     | '/maintenance'
     | '/reports'
@@ -147,6 +159,7 @@ export interface FileRouteTypes {
     | '/login/'
     | '/_layout/announcements/'
     | '/_layout/billing/'
+    | '/_layout/conversations/'
     | '/_layout/gate/'
     | '/_layout/maintenance/'
     | '/_layout/reports/'
@@ -225,6 +238,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutGateIndexRouteImport
       parentRoute: typeof LayoutRouteRoute
     }
+    '/_layout/conversations/': {
+      id: '/_layout/conversations/'
+      path: '/conversations'
+      fullPath: '/conversations/'
+      preLoaderRoute: typeof LayoutConversationsIndexRouteImport
+      parentRoute: typeof LayoutRouteRoute
+    }
     '/_layout/billing/': {
       id: '/_layout/billing/'
       path: '/billing'
@@ -246,6 +266,7 @@ interface LayoutRouteRouteChildren {
   LayoutIndexRoute: typeof LayoutIndexRoute
   LayoutAnnouncementsIndexRoute: typeof LayoutAnnouncementsIndexRoute
   LayoutBillingIndexRoute: typeof LayoutBillingIndexRoute
+  LayoutConversationsIndexRoute: typeof LayoutConversationsIndexRoute
   LayoutGateIndexRoute: typeof LayoutGateIndexRoute
   LayoutMaintenanceIndexRoute: typeof LayoutMaintenanceIndexRoute
   LayoutReportsIndexRoute: typeof LayoutReportsIndexRoute
@@ -258,6 +279,7 @@ const LayoutRouteRouteChildren: LayoutRouteRouteChildren = {
   LayoutIndexRoute: LayoutIndexRoute,
   LayoutAnnouncementsIndexRoute: LayoutAnnouncementsIndexRoute,
   LayoutBillingIndexRoute: LayoutBillingIndexRoute,
+  LayoutConversationsIndexRoute: LayoutConversationsIndexRoute,
   LayoutGateIndexRoute: LayoutGateIndexRoute,
   LayoutMaintenanceIndexRoute: LayoutMaintenanceIndexRoute,
   LayoutReportsIndexRoute: LayoutReportsIndexRoute,

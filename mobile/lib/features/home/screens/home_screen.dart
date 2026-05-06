@@ -250,6 +250,14 @@ class HomeScreen extends ConsumerWidget {
                         ),
                       ),
                       _QuickAction(
+                        icon: Icons.chat_bubble_rounded,
+                        label: 'Support',
+                        route: '/home/chat',
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF0891B2), Color(0xFF0E7490)],
+                        ),
+                      ),
+                      _QuickAction(
                         icon: Icons.person_rounded,
                         label: 'Profile',
                         route: '/home/profile',

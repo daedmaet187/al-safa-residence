@@ -169,6 +169,33 @@ export interface StaffMember {
   createdAt: string
 }
 
+export type ConversationStatus = 'open' | 'closed'
+export type MessageSenderType = 'resident' | 'admin'
+
+export interface Message {
+  id: string
+  conversationId: string
+  senderId: string
+  senderType: MessageSenderType
+  content: string
+  isRead: boolean
+  createdAt: string
+}
+
+export interface Conversation {
+  id: string
+  residentId: string
+  resident?: { id: string; name: string; phone?: string | null }
+  unitId?: string | null
+  unit?: { id: string; number: string } | null
+  subject: string
+  status: ConversationStatus
+  createdAt: string
+  updatedAt: string
+  messages?: Message[]
+  unreadCount?: number
+}
+
 export interface DashboardStats {
   totalResidents: number
   totalUnits: number

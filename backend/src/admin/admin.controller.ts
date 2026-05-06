@@ -14,9 +14,11 @@ import {
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import { AdminService } from './admin.service';
+import { ChatService } from '../chat/chat.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { User } from '../common/decorators/user.decorator';
 
 @ApiTags('admin')
 @ApiBearerAuth()
@@ -24,7 +26,10 @@ import { Roles } from '../common/decorators/roles.decorator';
 @Roles(Role.ADMIN)
 @Controller('admin')
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(
+    private readonly adminService: AdminService,
+    private readonly chatService: ChatService,
+  ) {}
 
   // ── Dashboard ──────────────────────────────────────────────────────────────
 
@@ -273,6 +278,52 @@ export class AdminController {
     @Param('id') id: string,
   ) {
     return this.adminService.deactivateHouseholdMember(unitId, id);
+  }
+
+  // ── Conversations ──────────────────────────────────────────────────────────
+
+  @Get('conversations')
+  @ApiOperation({ summary: 'List all conversations' })
+  @ApiQuery({ name: 'skip', required: false })
+  @ApiQuery({ name: 'take', required: false })
+  @ApiQuery({ name: 'status', required: false })
+  adminGetConversations(
+    @Query('skip') skip?: string,
+    @Query('take') take?: string,
+    @Query('status') status?: string,
+  ) {
+    return this.chatService.adminGetConversations(skip ? +skip : 0, take ? +take : 20, status);
+  }
+
+  @Get('conversations/:id')
+  @ApiOperation({ summary: 'Get conversation with messages' })
+  adminGetConversation(@Param('id') id: string) {
+    return this.chatService.adminGetConversation(id);
+  }
+
+  @Post('conversations/:id/messages')
+  @ApiOperation({ summary: 'Reply as admin' })
+  adminSendMessage(
+    @Param('id') id: string,
+    @Body() dto: { content: string },
+    @User() user: any,
+  ) {
+    return this.chatService.adminSendMessage(user.id, id, dto as any);
+  }
+
+  @Patch('conversations/:id/status')
+  @ApiOperation({ summary: 'Open or close a conversation' })
+  adminUpdateStatus(
+    @Param('id') id: string,
+    @Body() dto: { status: string },
+  ) {
+    return this.chatService.adminUpdateStatus(id, dto.status);
+  }
+
+  @Patch('conversations/:id/read')
+  @ApiOperation({ summary: 'Mark resident messages as read' })
+  adminMarkRead(@Param('id') id: string) {
+    return this.chatService.adminMarkRead(id);
   }
 
 }

@@ -28,6 +28,7 @@ model User {
   deviceTokens     DeviceToken[]
   payments         Payment[]
   householdMembers HouseholdMember[]
+  conversations    Conversation[]
 
   @@map("users")
 }
@@ -52,9 +53,10 @@ model Unit {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  assignments UnitAssignment[]
-  maintenance MaintenanceRequest[]
-  bills       Bill[]
+  assignments   UnitAssignment[]
+  maintenance   MaintenanceRequest[]
+  bills         Bill[]
+  conversations Conversation[]
 
   @@map("units")
 }
@@ -301,4 +303,44 @@ model HouseholdDeviceToken {
   householdMember HouseholdMember @relation(fields: [householdMemberId], references: [id])
 
   @@map("household_device_tokens")
+}
+
+model Conversation {
+  id         String             @id @default(uuid())
+  residentId String
+  unitId     String?
+  subject    String
+  status     ConversationStatus @default(OPEN)
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+
+  resident User     @relation(fields: [residentId], references: [id])
+  unit     Unit?    @relation(fields: [unitId], references: [id])
+  messages Message[]
+
+  @@map("conversations")
+}
+
+model Message {
+  id             String     @id @default(uuid())
+  conversationId String
+  senderId       String
+  senderType     SenderType
+  content        String
+  isRead         Boolean    @default(false)
+  createdAt      DateTime   @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}
+
+enum ConversationStatus {
+  OPEN
+  CLOSED
+}
+
+enum SenderType {
+  RESIDENT
+  ADMIN
 }

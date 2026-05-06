@@ -132,6 +132,11 @@ class ProfileScreen extends ConsumerWidget {
             );
           }),
           _SectionTile(
+            icon: Icons.chat_bubble_outline_rounded,
+            title: 'Chat Support',
+            onTap: () => context.push('/home/chat'),
+          ),
+          _SectionTile(
             icon: Icons.help_outline_rounded,
             title: 'Help & Support',
             onTap: () {},

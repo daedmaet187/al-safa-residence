@@ -29,6 +29,9 @@ import '../../features/security/screens/security_home_screen.dart';
 import '../../features/security/screens/security_login_screen.dart';
 import '../../features/security/screens/qr_scan_screen.dart';
 import '../../features/security/screens/visitor_log_screen.dart';
+import '../../features/chat/screens/chat_screen.dart';
+import '../../features/chat/screens/conversation_screen.dart';
+import '../../features/chat/screens/new_conversation_screen.dart';
 import '../storage/secure_storage.dart';
 import '../theme/app_colors.dart';
 
@@ -109,6 +112,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/home/profile',
             builder: (context, state) => const ProfileScreen(),
           ),
+          GoRoute(
+            path: '/home/chat',
+            builder: (context, state) => const ChatScreen(),
+          ),
         ],
       ),
 
@@ -172,6 +179,17 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/home/household-members/:id',
         builder: (context, state) =>
             MemberDetailScreen(memberId: state.pathParameters['id']!),
+      ),
+
+      // ── Chat (static /new before parameterized /:id) ─────────────────────────
+      GoRoute(
+        path: '/home/chat/new',
+        builder: (context, state) => const NewConversationScreen(),
+      ),
+      GoRoute(
+        path: '/home/chat/:id',
+        builder: (context, state) =>
+            ConversationScreen(conversationId: state.pathParameters['id']!),
       ),
 
       // ── Security Guard ───────────────────────────────────────────────────────
@@ -252,9 +270,9 @@ class _HomeShell extends StatelessWidget {
                 label: 'Gate',
               ),
               NavigationDestination(
-                icon: Icon(Icons.build_outlined),
-                selectedIcon: Icon(Icons.build_rounded),
-                label: 'Requests',
+                icon: Icon(Icons.chat_bubble_outline_rounded),
+                selectedIcon: Icon(Icons.chat_bubble_rounded),
+                label: 'Chat',
               ),
               NavigationDestination(
                 icon: Icon(Icons.person_outline_rounded),
@@ -272,7 +290,7 @@ class _HomeShell extends StatelessWidget {
     '/home',
     '/home/payments',
     '/home/gate',
-    '/home/maintenance',
+    '/home/chat',
     '/home/profile',
   ];
 

@@ -10,6 +10,7 @@ import {
   UserCog,
   BarChart3,
   LogOut,
+  MessageSquare,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { clearToken } from '@/lib/axios'
@@ -24,6 +25,7 @@ const navItems = [
   { href: '/maintenance', icon: Wrench, label: 'Maintenance' },
   { href: '/gate', icon: ShieldCheck, label: 'Gate & Security' },
   { href: '/announcements', icon: Bell, label: 'Announcements' },
+  { href: '/conversations', icon: MessageSquare, label: 'Conversations' },
   { href: '/staff', icon: UserCog, label: 'Staff' },
   { href: '/reports', icon: BarChart3, label: 'Reports' },
 ]
