@@ -135,7 +135,6 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                         if (value.isEmpty && i > 0) {
                           _focusNodes[i - 1].requestFocus();
                         }
-                        if (_otpCode.length == 6) _verify();
                       },
                     ),
                   );

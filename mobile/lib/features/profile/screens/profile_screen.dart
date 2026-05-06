@@ -65,9 +65,9 @@ class ProfileScreen extends ConsumerWidget {
                   style: Theme.of(context).textTheme.headlineSmall,
                 ),
                 const SizedBox(height: 4),
-                if (user?.phone.isNotEmpty == true)
+                if (user?.phone?.isNotEmpty == true)
                   Text(
-                    user!.phone,
+                    user!.phone ?? '',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: isDark
                             ? AppColors.darkTextMuted

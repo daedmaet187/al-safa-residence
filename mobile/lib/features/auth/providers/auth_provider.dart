@@ -132,7 +132,9 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     await storage.setAccessLevel(accessLevel);
     if (primaryUserId != null) await storage.setPrimaryUserId(primaryUserId);
 
-    final user = User.fromJson(resp.data['user'] as Map<String, dynamic>);
+    final userData = resp.data['user'];
+    if (userData == null) throw Exception('No user data in OTP response');
+    final user = User.fromJson(userData as Map<String, dynamic>);
     final unitsData = resp.data['units'] as List<dynamic>? ?? [];
     final units = unitsData
         .map((e) => ResidenceUnit.fromJson(e as Map<String, dynamic>))

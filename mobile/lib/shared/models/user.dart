@@ -1,16 +1,16 @@
 class User {
   final String id;
   final String name;
-  final String email;
-  final String phone;
+  final String? email;
+  final String? phone;
   final String role;
   final String? avatarUrl;
 
   const User({
     required this.id,
     required this.name,
-    required this.email,
-    required this.phone,
+    this.email,
+    this.phone,
     required this.role,
     this.avatarUrl,
   });
@@ -18,8 +18,8 @@ class User {
   factory User.fromJson(Map<String, dynamic> json) => User(
         id: json['id'] as String,
         name: json['name'] as String,
-        email: json['email'] as String,
-        phone: json['phone'] as String? ?? '',
+        email: json['email'] as String?,
+        phone: json['phone'] as String?,
         role: json['role'] as String,
         avatarUrl: json['avatarUrl'] as String?,
       );

@@ -47,7 +47,8 @@ export class AuthService {
   }
 
   // ── Mobile: send OTP to phone ──────────────────────────────────────────────
-  async sendOtp(phone: string) {
+  async sendOtp(rawPhone: string) {
+    const phone = this.normalizePhone(rawPhone);
     const user = await this.prisma.user.findFirst({ where: { phone } });
     if (user && !user.deletedAt && user.isActive) {
       return { message: 'OTP sent', phone };
@@ -63,7 +64,8 @@ export class AuthService {
   }
 
   // ── Mobile: verify OTP by phone ────────────────────────────────────────────
-  async verifyOtp(phone: string, otp: string) {
+  async verifyOtp(rawPhone: string, otp: string) {
+    const phone = this.normalizePhone(rawPhone);
     // Try primary resident first
     const user = await this.prisma.user.findFirst({
       where: { phone },
@@ -323,6 +325,16 @@ export class AuthService {
   async logout(refreshToken: string) {
     await this.prisma.refreshToken.deleteMany({ where: { token: refreshToken } });
     return { message: 'Logged out successfully' };
+  }
+
+  private normalizePhone(phone: string): string {
+    let p = phone.replace(/[\s\-()]/g, '');
+    if (p.startsWith('+9640')) return '+964' + p.slice(5);
+    if (p.startsWith('+964')) return p;
+    if (p.startsWith('9640')) return '+964' + p.slice(4);
+    if (p.startsWith('964')) return '+' + p;
+    if (p.startsWith('0')) return '+964' + p.slice(1);
+    return '+964' + p;
   }
 
   private async generateTokens(
