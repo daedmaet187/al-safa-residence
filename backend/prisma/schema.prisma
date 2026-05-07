@@ -29,6 +29,7 @@ model User {
   payments         Payment[]
   householdMembers HouseholdMember[]
   conversations    Conversation[]
+  amenityBookings  AmenityBooking[]
 
   @@map("users")
 }
@@ -53,10 +54,11 @@ model Unit {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  assignments   UnitAssignment[]
-  maintenance   MaintenanceRequest[]
-  bills         Bill[]
-  conversations Conversation[]
+  assignments     UnitAssignment[]
+  maintenance     MaintenanceRequest[]
+  bills           Bill[]
+  conversations   Conversation[]
+  amenityBookings AmenityBooking[]
 
   @@map("units")
 }
@@ -343,4 +345,41 @@ enum ConversationStatus {
 enum SenderType {
   RESIDENT
   ADMIN
+}
+
+model Amenity {
+  id             String           @id @default(uuid())
+  name           String
+  description    String?
+  location       String?
+  capacity       Int              @default(10)
+  imageUrl       String?
+  isActive       Boolean          @default(true)
+  operatingHours Json?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  bookings       AmenityBooking[]
+}
+
+model AmenityBooking {
+  id          String               @id @default(uuid())
+  amenityId   String
+  residentId  String
+  unitId      String?
+  date        String
+  startTime   String
+  endTime     String
+  status      AmenityBookingStatus @default(PENDING)
+  notes       String?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  amenity     Amenity              @relation(fields: [amenityId], references: [id])
+  resident    User                 @relation(fields: [residentId], references: [id])
+  unit        Unit?                @relation(fields: [unitId], references: [id])
+}
+
+enum AmenityBookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
 }

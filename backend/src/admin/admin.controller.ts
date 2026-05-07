@@ -263,6 +263,74 @@ export class AdminController {
     return this.adminService.getGateReport();
   }
 
+  // ── Amenities ──────────────────────────────────────────────────────────────
+
+  @Get('amenities/bookings')
+  @ApiOperation({ summary: 'List all amenity bookings' })
+  @ApiQuery({ name: 'status', required: false })
+  @ApiQuery({ name: 'amenityId', required: false })
+  @ApiQuery({ name: 'skip', required: false })
+  @ApiQuery({ name: 'take', required: false })
+  getAdminAmenityBookings(
+    @Query('skip') skip?: string,
+    @Query('take') take?: string,
+    @Query('status') status?: string,
+    @Query('amenityId') amenityId?: string,
+  ) {
+    return this.adminService.getAdminAmenityBookings(
+      skip ? +skip : 0,
+      take ? +take : 50,
+      status,
+      amenityId,
+    );
+  }
+
+  @Post('amenities')
+  @ApiOperation({ summary: 'Create amenity' })
+  createAmenity(
+    @Body() dto: { name: string; description?: string; location?: string; capacity?: number; imageUrl?: string; isActive?: boolean; operatingHours?: any },
+  ) {
+    return this.adminService.createAmenity(dto);
+  }
+
+  @Patch('amenities/bookings/:id/status')
+  @ApiOperation({ summary: 'Update booking status (confirmed/cancelled)' })
+  updateAmenityBookingStatus(
+    @Param('id') id: string,
+    @Body() dto: { status: string },
+  ) {
+    return this.adminService.updateAmenityBookingStatus(id, dto.status);
+  }
+
+  @Get('amenities')
+  @ApiOperation({ summary: 'List all amenities (paginated)' })
+  @ApiQuery({ name: 'skip', required: false })
+  @ApiQuery({ name: 'take', required: false })
+  getAdminAmenities(@Query('skip') skip?: string, @Query('take') take?: string) {
+    return this.adminService.getAdminAmenities(skip ? +skip : 0, take ? +take : 50);
+  }
+
+  @Get('amenities/:id')
+  @ApiOperation({ summary: 'Amenity detail' })
+  getAdminAmenity(@Param('id') id: string) {
+    return this.adminService.getAdminAmenity(id);
+  }
+
+  @Patch('amenities/:id')
+  @ApiOperation({ summary: 'Update amenity' })
+  updateAmenity(
+    @Param('id') id: string,
+    @Body() dto: { name?: string; description?: string; location?: string; capacity?: number; imageUrl?: string; isActive?: boolean; operatingHours?: any },
+  ) {
+    return this.adminService.updateAmenity(id, dto);
+  }
+
+  @Patch('amenities/:id/deactivate')
+  @ApiOperation({ summary: 'Deactivate amenity' })
+  deactivateAmenity(@Param('id') id: string) {
+    return this.adminService.deactivateAmenity(id);
+  }
+
   // ── Household Members ──────────────────────────────────────────────────────
 
   @Get('units/:unitId/household-members')

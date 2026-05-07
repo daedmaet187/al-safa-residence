@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { BillStatus, MaintenanceStatus, Role } from '@prisma/client';
+import { AmenityBookingStatus, BillStatus, MaintenanceStatus, Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 // Helper: wrap paginated responses in the shape the dashboard expects
@@ -736,5 +736,97 @@ export class AdminService {
     });
 
     return { message: 'Household member deactivated' };
+  }
+
+  // ── Amenities ──────────────────────────────────────────────────────────────
+
+  async getAdminAmenities(skip = 0, take = 50) {
+    const [data, count] = await Promise.all([
+      this.prisma.amenity.findMany({
+        skip,
+        take,
+        orderBy: { name: 'asc' },
+      }),
+      this.prisma.amenity.count(),
+    ]);
+    return paginate(data, count, skip, take);
+  }
+
+  async getAdminAmenity(id: string) {
+    const amenity = await this.prisma.amenity.findUnique({
+      where: { id },
+      include: {
+        _count: { select: { bookings: true } },
+      },
+    });
+    if (!amenity) throw new NotFoundException(`Amenity ${id} not found`);
+    return amenity;
+  }
+
+  async createAmenity(dto: {
+    name: string;
+    description?: string;
+    location?: string;
+    capacity?: number;
+    imageUrl?: string;
+    isActive?: boolean;
+    operatingHours?: any;
+  }) {
+    return this.prisma.amenity.create({ data: dto });
+  }
+
+  async updateAmenity(id: string, dto: {
+    name?: string;
+    description?: string;
+    location?: string;
+    capacity?: number;
+    imageUrl?: string;
+    isActive?: boolean;
+    operatingHours?: any;
+  }) {
+    const amenity = await this.prisma.amenity.findUnique({ where: { id } });
+    if (!amenity) throw new NotFoundException(`Amenity ${id} not found`);
+    return this.prisma.amenity.update({ where: { id }, data: dto });
+  }
+
+  async deactivateAmenity(id: string) {
+    const amenity = await this.prisma.amenity.findUnique({ where: { id } });
+    if (!amenity) throw new NotFoundException(`Amenity ${id} not found`);
+    return this.prisma.amenity.update({ where: { id }, data: { isActive: false } });
+  }
+
+  async getAdminAmenityBookings(skip = 0, take = 50, status?: string, amenityId?: string) {
+    const where: any = {};
+    if (status) where.status = status.toUpperCase() as AmenityBookingStatus;
+    if (amenityId) where.amenityId = amenityId;
+
+    const [data, count] = await Promise.all([
+      this.prisma.amenityBooking.findMany({
+        where,
+        skip,
+        take,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          amenity: { select: { id: true, name: true, location: true } },
+          resident: { select: { id: true, name: true, phone: true } },
+          unit: { select: { id: true, number: true, building: true } },
+        },
+      }),
+      this.prisma.amenityBooking.count({ where }),
+    ]);
+    return paginate(data, count, skip, take);
+  }
+
+  async updateAmenityBookingStatus(id: string, status: string) {
+    const booking = await this.prisma.amenityBooking.findUnique({ where: { id } });
+    if (!booking) throw new NotFoundException(`Booking ${id} not found`);
+    return this.prisma.amenityBooking.update({
+      where: { id },
+      data: { status: status.toUpperCase() as AmenityBookingStatus },
+      include: {
+        amenity: { select: { id: true, name: true } },
+        resident: { select: { id: true, name: true } },
+      },
+    });
   }
 }
