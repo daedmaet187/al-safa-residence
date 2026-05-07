@@ -212,3 +212,32 @@ export interface ActivityItem {
   message: string
   createdAt: string
 }
+
+export interface Amenity {
+  id: string
+  name: string
+  description?: string | null
+  location?: string | null
+  capacity: number
+  imageUrl?: string | null
+  isActive: boolean
+  operatingHours?: Record<string, string> | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface AmenityBooking {
+  id: string
+  amenityId: string
+  amenity?: { id: string; name: string } | null
+  residentId: string
+  resident?: { id: string; name: string; phone?: string | null } | null
+  unitId?: string | null
+  unit?: { id: string; number: string } | null
+  date: string
+  startTime: string
+  endTime: string
+  status: 'pending' | 'confirmed' | 'cancelled'
+  notes?: string | null
+  createdAt: string
+}

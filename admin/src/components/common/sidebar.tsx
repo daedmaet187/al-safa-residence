@@ -1,4 +1,5 @@
 import { Link, useLocation } from '@tanstack/react-router'
+import { useQuery } from '@tanstack/react-query'
 import {
   LayoutDashboard,
   Users,
@@ -11,11 +12,14 @@ import {
   BarChart3,
   LogOut,
   MessageSquare,
+  Calendar,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { clearToken } from '@/lib/axios'
+import api from '@/lib/axios'
 import { CurrencySelector } from './currency-selector'
 import { DarkModeToggle } from './dark-mode-toggle'
+import type { PaginatedResponse, AmenityBooking } from '@/types'
 
 const navItems = [
   { href: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -32,6 +36,21 @@ const navItems = [
 
 export function Sidebar() {
   const location = useLocation()
+
+  const { data: pendingData } = useQuery({
+    queryKey: ['amenity-bookings', 'pending-count'],
+    queryFn: async () => {
+      const { data } = await api.get<PaginatedResponse<AmenityBooking>>(
+        '/admin/amenities/bookings',
+        { params: { status: 'pending', take: 1 } }
+      )
+      return data.total
+    },
+    staleTime: 30_000,
+  })
+  const pendingCount = pendingData ?? 0
+
+  const isAmenitiesActive = location.pathname.startsWith('/amenities')
 
   function handleLogout() {
     clearToken()
@@ -79,6 +98,52 @@ export function Sidebar() {
             </Link>
           )
         })}
+
+        {/* Amenities section */}
+        <div className="pt-1">
+          <div className={cn(
+            'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium',
+            isAmenitiesActive ? 'text-white' : 'text-white/40'
+          )}>
+            <Calendar className="h-4 w-4 shrink-0 text-white/40" />
+            Amenities
+          </div>
+          <div className="ml-3 space-y-0.5">
+            <Link
+              to="/amenities"
+              className={cn(
+                'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                location.pathname === '/amenities'
+                  ? 'bg-[var(--primary)] text-white'
+                  : 'text-white/60 hover:text-white hover:bg-white/5'
+              )}
+            >
+              Facilities
+              {location.pathname === '/amenities' && (
+                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[var(--accent)]" />
+              )}
+            </Link>
+            <Link
+              to="/amenities/bookings"
+              className={cn(
+                'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                location.pathname.startsWith('/amenities/bookings')
+                  ? 'bg-[var(--primary)] text-white'
+                  : 'text-white/60 hover:text-white hover:bg-white/5'
+              )}
+            >
+              Bookings
+              {pendingCount > 0 && (
+                <span className="ml-auto bg-[var(--warning)] text-white text-xs font-bold rounded-full px-1.5 py-0.5 leading-none min-w-[1.25rem] text-center">
+                  {pendingCount}
+                </span>
+              )}
+              {pendingCount === 0 && location.pathname.startsWith('/amenities/bookings') && (
+                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[var(--accent)]" />
+              )}
+            </Link>
+          </div>
+        </div>
       </nav>
 
       {/* User footer */}

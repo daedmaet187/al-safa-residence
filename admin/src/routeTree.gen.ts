@@ -21,6 +21,8 @@ import { Route as LayoutGateIndexRouteImport } from './routes/_layout/gate/index
 import { Route as LayoutConversationsIndexRouteImport } from './routes/_layout/conversations/index'
 import { Route as LayoutBillingIndexRouteImport } from './routes/_layout/billing/index'
 import { Route as LayoutAnnouncementsIndexRouteImport } from './routes/_layout/announcements/index'
+import { Route as LayoutAmenitiesIndexRouteImport } from './routes/_layout/amenities/index'
+import { Route as LayoutAmenitiesBookingsIndexRouteImport } from './routes/_layout/amenities/bookings/index'
 
 const LayoutRouteRoute = LayoutRouteRouteImport.update({
   id: '/_layout',
@@ -83,10 +85,22 @@ const LayoutAnnouncementsIndexRoute =
     path: '/announcements/',
     getParentRoute: () => LayoutRouteRoute,
   } as any)
+const LayoutAmenitiesIndexRoute = LayoutAmenitiesIndexRouteImport.update({
+  id: '/amenities/',
+  path: '/amenities/',
+  getParentRoute: () => LayoutRouteRoute,
+} as any)
+const LayoutAmenitiesBookingsIndexRoute =
+  LayoutAmenitiesBookingsIndexRouteImport.update({
+    id: '/amenities/bookings/',
+    path: '/amenities/bookings/',
+    getParentRoute: () => LayoutRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof LayoutIndexRoute
   '/login/': typeof LoginIndexRoute
+  '/amenities/': typeof LayoutAmenitiesIndexRoute
   '/announcements/': typeof LayoutAnnouncementsIndexRoute
   '/billing/': typeof LayoutBillingIndexRoute
   '/conversations/': typeof LayoutConversationsIndexRoute
@@ -96,10 +110,12 @@ export interface FileRoutesByFullPath {
   '/residents/': typeof LayoutResidentsIndexRoute
   '/staff/': typeof LayoutStaffIndexRoute
   '/units/': typeof LayoutUnitsIndexRoute
+  '/amenities/bookings/': typeof LayoutAmenitiesBookingsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof LayoutIndexRoute
   '/login': typeof LoginIndexRoute
+  '/amenities': typeof LayoutAmenitiesIndexRoute
   '/announcements': typeof LayoutAnnouncementsIndexRoute
   '/billing': typeof LayoutBillingIndexRoute
   '/conversations': typeof LayoutConversationsIndexRoute
@@ -109,12 +125,14 @@ export interface FileRoutesByTo {
   '/residents': typeof LayoutResidentsIndexRoute
   '/staff': typeof LayoutStaffIndexRoute
   '/units': typeof LayoutUnitsIndexRoute
+  '/amenities/bookings': typeof LayoutAmenitiesBookingsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_layout': typeof LayoutRouteRouteWithChildren
   '/_layout/': typeof LayoutIndexRoute
   '/login/': typeof LoginIndexRoute
+  '/_layout/amenities/': typeof LayoutAmenitiesIndexRoute
   '/_layout/announcements/': typeof LayoutAnnouncementsIndexRoute
   '/_layout/billing/': typeof LayoutBillingIndexRoute
   '/_layout/conversations/': typeof LayoutConversationsIndexRoute
@@ -124,12 +142,14 @@ export interface FileRoutesById {
   '/_layout/residents/': typeof LayoutResidentsIndexRoute
   '/_layout/staff/': typeof LayoutStaffIndexRoute
   '/_layout/units/': typeof LayoutUnitsIndexRoute
+  '/_layout/amenities/bookings/': typeof LayoutAmenitiesBookingsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/login/'
+    | '/amenities/'
     | '/announcements/'
     | '/billing/'
     | '/conversations/'
@@ -139,10 +159,12 @@ export interface FileRouteTypes {
     | '/residents/'
     | '/staff/'
     | '/units/'
+    | '/amenities/bookings/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/login'
+    | '/amenities'
     | '/announcements'
     | '/billing'
     | '/conversations'
@@ -152,11 +174,13 @@ export interface FileRouteTypes {
     | '/residents'
     | '/staff'
     | '/units'
+    | '/amenities/bookings'
   id:
     | '__root__'
     | '/_layout'
     | '/_layout/'
     | '/login/'
+    | '/_layout/amenities/'
     | '/_layout/announcements/'
     | '/_layout/billing/'
     | '/_layout/conversations/'
@@ -166,6 +190,7 @@ export interface FileRouteTypes {
     | '/_layout/residents/'
     | '/_layout/staff/'
     | '/_layout/units/'
+    | '/_layout/amenities/bookings/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -259,11 +284,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutAnnouncementsIndexRouteImport
       parentRoute: typeof LayoutRouteRoute
     }
+    '/_layout/amenities/': {
+      id: '/_layout/amenities/'
+      path: '/amenities'
+      fullPath: '/amenities/'
+      preLoaderRoute: typeof LayoutAmenitiesIndexRouteImport
+      parentRoute: typeof LayoutRouteRoute
+    }
+    '/_layout/amenities/bookings/': {
+      id: '/_layout/amenities/bookings/'
+      path: '/amenities/bookings'
+      fullPath: '/amenities/bookings/'
+      preLoaderRoute: typeof LayoutAmenitiesBookingsIndexRouteImport
+      parentRoute: typeof LayoutRouteRoute
+    }
   }
 }
 
 interface LayoutRouteRouteChildren {
   LayoutIndexRoute: typeof LayoutIndexRoute
+  LayoutAmenitiesIndexRoute: typeof LayoutAmenitiesIndexRoute
   LayoutAnnouncementsIndexRoute: typeof LayoutAnnouncementsIndexRoute
   LayoutBillingIndexRoute: typeof LayoutBillingIndexRoute
   LayoutConversationsIndexRoute: typeof LayoutConversationsIndexRoute
@@ -273,10 +313,12 @@ interface LayoutRouteRouteChildren {
   LayoutResidentsIndexRoute: typeof LayoutResidentsIndexRoute
   LayoutStaffIndexRoute: typeof LayoutStaffIndexRoute
   LayoutUnitsIndexRoute: typeof LayoutUnitsIndexRoute
+  LayoutAmenitiesBookingsIndexRoute: typeof LayoutAmenitiesBookingsIndexRoute
 }
 
 const LayoutRouteRouteChildren: LayoutRouteRouteChildren = {
   LayoutIndexRoute: LayoutIndexRoute,
+  LayoutAmenitiesIndexRoute: LayoutAmenitiesIndexRoute,
   LayoutAnnouncementsIndexRoute: LayoutAnnouncementsIndexRoute,
   LayoutBillingIndexRoute: LayoutBillingIndexRoute,
   LayoutConversationsIndexRoute: LayoutConversationsIndexRoute,
@@ -286,6 +328,7 @@ const LayoutRouteRouteChildren: LayoutRouteRouteChildren = {
   LayoutResidentsIndexRoute: LayoutResidentsIndexRoute,
   LayoutStaffIndexRoute: LayoutStaffIndexRoute,
   LayoutUnitsIndexRoute: LayoutUnitsIndexRoute,
+  LayoutAmenitiesBookingsIndexRoute: LayoutAmenitiesBookingsIndexRoute,
 }
 
 const LayoutRouteRouteWithChildren = LayoutRouteRoute._addFileChildren(

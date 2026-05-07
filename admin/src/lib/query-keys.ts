@@ -56,4 +56,13 @@ export const queryKeys = {
     list: (params?: Record<string, unknown>) => ['conversations', 'list', params] as const,
     detail: (id: string) => ['conversations', 'detail', id] as const,
   },
+  amenities: {
+    all: ['amenities'] as const,
+    list: () => [...queryKeys.amenities.all, 'list'] as const,
+    detail: (id: string) => [...queryKeys.amenities.all, id] as const,
+  },
+  amenityBookings: {
+    all: ['amenity-bookings'] as const,
+    list: () => [...queryKeys.amenityBookings.all, 'list'] as const,
+  },
 }
