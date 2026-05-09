@@ -359,6 +359,8 @@ model Amenity {
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
   bookings       AmenityBooking[]
+
+  @@map("amenities")
 }
 
 model AmenityBooking {
@@ -376,6 +378,8 @@ model AmenityBooking {
   amenity     Amenity              @relation(fields: [amenityId], references: [id])
   resident    User                 @relation(fields: [residentId], references: [id])
   unit        Unit?                @relation(fields: [unitId], references: [id])
+
+  @@map("amenity_bookings")
 }
 
 enum AmenityBookingStatus {
