@@ -32,6 +32,9 @@ import '../../features/security/screens/visitor_log_screen.dart';
 import '../../features/chat/screens/chat_screen.dart';
 import '../../features/chat/screens/conversation_screen.dart';
 import '../../features/chat/screens/new_conversation_screen.dart';
+import '../../features/amenities/screens/amenities_screen.dart';
+import '../../features/amenities/screens/amenity_detail_screen.dart';
+import '../../features/amenities/screens/my_bookings_screen.dart';
 import '../storage/secure_storage.dart';
 import '../theme/app_colors.dart';
 
@@ -117,6 +120,21 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const ChatScreen(),
           ),
         ],
+      ),
+
+      // ── Amenities — static paths BEFORE parametric /:id ─────────────────────
+      GoRoute(
+        path: '/home/amenities',
+        builder: (context, state) => const AmenitiesScreen(),
+      ),
+      GoRoute(
+        path: '/home/amenities/my-bookings',
+        builder: (context, state) => const MyBookingsScreen(),
+      ),
+      GoRoute(
+        path: '/home/amenities/:id',
+        builder: (context, state) =>
+            AmenityDetailScreen(amenityId: state.pathParameters['id']!),
       ),
 
       // ── Home sub-routes (no shell) — static paths BEFORE parametric ────────

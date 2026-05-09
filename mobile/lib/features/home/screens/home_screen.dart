@@ -258,6 +258,14 @@ class HomeScreen extends ConsumerWidget {
                         ),
                       ),
                       _QuickAction(
+                        icon: Icons.pool,
+                        label: 'Amenities',
+                        route: '/home/amenities',
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF0284C7), Color(0xFF0369A1)],
+                        ),
+                      ),
+                      _QuickAction(
                         icon: Icons.person_rounded,
                         label: 'Profile',
                         route: '/home/profile',
