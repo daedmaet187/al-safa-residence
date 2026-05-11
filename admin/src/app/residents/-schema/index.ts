@@ -3,7 +3,7 @@ import { z } from 'zod'
 export const createResidentSchema = z.object({
   firstName: z.string().min(2, 'First name required'),
   lastName: z.string().min(2, 'Last name required'),
-  phone: z.string().min(7, 'Valid phone number required'),
+  phone: z.string().regex(/^\+?\d{10,15}$/, 'Enter a valid phone number (10–15 digits)'),
   email: z.string().email('Invalid email').optional().or(z.literal('')),
   unitId: z.string().optional(),
   nationalId: z.string().optional(),
@@ -13,7 +13,7 @@ export const createResidentSchema = z.object({
 export const updateResidentSchema = z.object({
   firstName: z.string().min(2).optional(),
   lastName: z.string().min(2).optional(),
-  phone: z.string().min(7).optional(),
+  phone: z.string().regex(/^\+?\d{10,15}$/).optional(),
   email: z.string().email().optional(),
   status: z.enum(['active', 'inactive', 'suspended', 'pending']).optional(),
   isActive: z.boolean().optional(),

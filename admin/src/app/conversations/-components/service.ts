@@ -66,5 +66,6 @@ export function useMarkConversationRead() {
       queryClient.invalidateQueries({ queryKey: queryKeys.conversations.detail(id) })
       queryClient.invalidateQueries({ queryKey: queryKeys.conversations.all })
     },
+    onError: () => toast.error('Failed to mark conversation as read'),
   })
 }

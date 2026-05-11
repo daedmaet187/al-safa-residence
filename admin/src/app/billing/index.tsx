@@ -28,7 +28,7 @@ function CreateBillButton() {
   const { mutate, isPending } = useCreateBill()
   const form = useForm<CreateBillValues>({
     resolver: zodResolver(createBillSchema),
-    defaultValues: { residentId: '', unitId: '', type: 'monthly_fee', amount: 0, dueDate: '' },
+    defaultValues: { residentId: '', unitId: '', type: 'MONTHLY_FEE', amount: 0, dueDate: '' },
   })
 
   return (
@@ -61,12 +61,11 @@ function CreateBillButton() {
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                     <SelectContent>
-                      <SelectItem value="monthly_fee">Monthly Fee</SelectItem>
-                      <SelectItem value="maintenance_fee">Maintenance Fee</SelectItem>
-                      <SelectItem value="utility">Utility</SelectItem>
-                      <SelectItem value="parking">Parking</SelectItem>
-                      <SelectItem value="amenity">Amenity</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
+                      <SelectItem value="MONTHLY_FEE">Monthly Fee</SelectItem>
+                      <SelectItem value="UTILITIES">Utilities</SelectItem>
+                      <SelectItem value="MAINTENANCE_FEE">Maintenance Fee</SelectItem>
+                      <SelectItem value="PARKING">Parking</SelectItem>
+                      <SelectItem value="OTHER">Other</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

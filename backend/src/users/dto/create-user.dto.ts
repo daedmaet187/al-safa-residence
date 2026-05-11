@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEmail, IsString, IsNotEmpty, IsOptional, IsEnum } from 'class-validator';
+import { IsEmail, IsString, IsNotEmpty, IsOptional, IsEnum, Matches } from 'class-validator';
 import { Role } from '@prisma/client';
 
 export class CreateUserDto {
@@ -16,6 +16,7 @@ export class CreateUserDto {
   @ApiPropertyOptional({ example: '+9647501234567' })
   @IsString()
   @IsOptional()
+  @Matches(/^\+?\d{10,15}$/, { message: 'phone must be 10–15 digits' })
   phone?: string;
 
   @ApiProperty({ example: 'securepassword123' })
