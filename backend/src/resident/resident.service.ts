@@ -1,6 +1,9 @@
 import { Injectable, NotFoundException, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
+import { S3Client, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { PrismaService } from '../prisma/prisma.service';
 
 const GUEST_PASS_MAX_ACTIVE = 5;
@@ -8,7 +11,16 @@ const GUEST_PASS_MAX_PER_MONTH = 10;
 
 @Injectable()
 export class ResidentService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly s3: S3Client;
+  private readonly bucket: string;
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly config: ConfigService,
+  ) {
+    this.s3 = new S3Client({ region: config.get<string>('aws.region') });
+    this.bucket = config.get<string>('aws.s3Bucket') ?? '';
+  }
 
   // ── Home summary ───────────────────────────────────────────────────────────
 
@@ -330,6 +342,66 @@ export class ResidentService {
     const hash = await bcrypt.hash(newPassword, 10);
     await this.prisma.user.update({ where: { id: userId }, data: { passwordHash: hash } });
     return { message: 'Password changed successfully' };
+  }
+
+  // ── Documents ─────────────────────────────────────────────────────────────
+
+  async listDocuments(userId: string) {
+    const docs = await this.prisma.document.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const withUrls = await Promise.all(
+      docs.map(async (doc) => {
+        let url: string | null = null;
+        if (this.bucket) {
+          try {
+            const cmd = new GetObjectCommand({ Bucket: this.bucket, Key: doc.s3Key });
+            url = await getSignedUrl(this.s3, cmd, { expiresIn: 3600 });
+          } catch {
+            // non-critical — return null url
+          }
+        }
+        return { ...doc, url };
+      }),
+    );
+
+    return withUrls;
+  }
+
+  async saveDocument(
+    userId: string,
+    dto: { name: string; type: string; s3Key: string; contentType: string },
+  ) {
+    if (!dto.s3Key.startsWith(`uploads/${userId}/`)) {
+      throw new BadRequestException('Invalid document key');
+    }
+    return this.prisma.document.create({
+      data: {
+        userId,
+        name: dto.name,
+        type: dto.type ?? 'other',
+        s3Key: dto.s3Key,
+        contentType: dto.contentType,
+      },
+    });
+  }
+
+  async deleteDocument(userId: string, docId: string) {
+    const doc = await this.prisma.document.findUnique({ where: { id: docId } });
+    if (!doc || doc.userId !== userId) throw new NotFoundException('Document not found');
+
+    if (this.bucket) {
+      try {
+        await this.s3.send(new DeleteObjectCommand({ Bucket: this.bucket, Key: doc.s3Key }));
+      } catch {
+        // S3 delete is best-effort; still remove DB record
+      }
+    }
+
+    await this.prisma.document.delete({ where: { id: docId } });
+    return { message: 'Document deleted' };
   }
 
   // ── Support ────────────────────────────────────────────────────────────────

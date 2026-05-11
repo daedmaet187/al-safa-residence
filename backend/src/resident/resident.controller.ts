@@ -131,4 +131,30 @@ export class ResidentController {
   getSupportInfo() {
     return this.residentService.getSupportInfo();
   }
+
+  // ── Documents ──────────────────────────────────────────────────────────────
+
+  @Get('documents')
+  @RequireAccess('FULL')
+  @ApiOperation({ summary: 'List resident ID documents' })
+  listDocuments(@User() user: any) {
+    return this.residentService.listDocuments(user.id);
+  }
+
+  @Post('documents')
+  @RequireAccess('FULL')
+  @ApiOperation({ summary: 'Save document metadata after S3 upload' })
+  saveDocument(
+    @User() user: any,
+    @Body() dto: { name: string; type: string; s3Key: string; contentType: string },
+  ) {
+    return this.residentService.saveDocument(user.id, dto);
+  }
+
+  @Delete('documents/:id')
+  @RequireAccess('FULL')
+  @ApiOperation({ summary: 'Delete a document' })
+  deleteDocument(@User() user: any, @Param('id') id: string) {
+    return this.residentService.deleteDocument(user.id, id);
+  }
 }

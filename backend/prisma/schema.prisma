@@ -30,8 +30,23 @@ model User {
   householdMembers HouseholdMember[]
   conversations    Conversation[]
   amenityBookings  AmenityBooking[]
+  documents        Document[]
 
   @@map("users")
+}
+
+model Document {
+  id          String   @id @default(uuid())
+  userId      String
+  name        String
+  type        String   @default("other")
+  s3Key       String
+  contentType String
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("documents")
 }
 
 enum Role {
