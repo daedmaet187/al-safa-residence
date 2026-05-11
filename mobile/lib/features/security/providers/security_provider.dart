@@ -155,7 +155,7 @@ class SecurityAuthNotifier extends AsyncNotifier<bool> {
 
   Future<void> sendOtp({required String phone}) async {
     final dio = ref.read(dioProvider);
-    await dio.post('/auth/send-otp', data: {'phone': phone});
+    await dio.post('/auth/send-otp', data: {'phone': phone, 'role': 'SECURITY'});
   }
 
   Future<void> verifyOtp({required String phone, required String otp}) async {
@@ -163,7 +163,7 @@ class SecurityAuthNotifier extends AsyncNotifier<bool> {
     state = await AsyncValue.guard(() async {
       final dio = ref.read(dioProvider);
       final storage = ref.read(secureStorageProvider);
-      final resp = await dio.post('/auth/verify-otp', data: {'phone': phone, 'otp': otp});
+      final resp = await dio.post('/auth/verify-otp', data: {'phone': phone, 'otp': otp, 'role': 'SECURITY'});
       final role = resp.data['role'] as String? ?? 'SECURITY';
       if (role.toUpperCase() != 'SECURITY') {
         throw Exception('This number is not a security guard account');

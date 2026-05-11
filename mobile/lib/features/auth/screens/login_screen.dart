@@ -37,8 +37,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            e.toString().contains('No account')
-                ? 'No account found with this number. Contact your building admin.'
+            (e.toString().contains('No account') || e.toString().contains('not registered'))
+                ? 'No resident account found with this number. Contact your building admin.'
                 : 'Something went wrong. Try again.',
           ),
           backgroundColor: AppColors.danger,

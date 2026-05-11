@@ -29,16 +29,18 @@ export class AuthController {
   @Post('send-otp')
   @ApiOperation({ summary: 'Send OTP to phone number (mobile login step 1)' })
   @ApiResponse({ status: HttpStatus.OK, description: 'OTP sent' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Phone not registered for given role' })
   async sendOtp(@Body(ValidationPipe) dto: SendOtpDto) {
-    return this.authService.sendOtp(dto.phone);
+    return this.authService.sendOtp(dto.phone, dto.role ?? 'RESIDENT');
   }
 
   @Post('verify-otp')
   @ApiOperation({ summary: 'Verify OTP by phone (mobile login step 2) — default OTP: 123456' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Tokens + user + units' })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Invalid OTP or phone not found' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Phone not registered for given role' })
   async verifyOtp(@Body(ValidationPipe) dto: VerifyOtpDto) {
-    return this.authService.verifyOtp(dto.phone, dto.otp);
+    return this.authService.verifyOtp(dto.phone, dto.otp, dto.role ?? 'RESIDENT');
   }
 
   @Post('login')

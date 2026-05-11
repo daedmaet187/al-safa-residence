@@ -103,7 +103,7 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
 
   Future<void> sendOtp({required String phone}) async {
     final dio = ref.read(dioProvider);
-    await dio.post('/auth/send-otp', data: {'phone': phone});
+    await dio.post('/auth/send-otp', data: {'phone': phone, 'role': 'RESIDENT'});
   }
 
   Future<void> verifyOtp({
@@ -116,6 +116,7 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     final resp = await dio.post('/auth/verify-otp', data: {
       'phone': phone,
       'otp': otp,
+      'role': 'RESIDENT',
     });
 
     final token = resp.data['accessToken'] as String;
