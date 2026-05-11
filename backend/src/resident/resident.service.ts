@@ -3,6 +3,9 @@ import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import { PrismaService } from '../prisma/prisma.service';
 
+const GUEST_PASS_MAX_ACTIVE = 5;
+const GUEST_PASS_MAX_PER_MONTH = 10;
+
 @Injectable()
 export class ResidentService {
   constructor(private readonly prisma: PrismaService) {}
@@ -185,6 +188,25 @@ export class ResidentService {
     userId: string,
     dto: { guestName: string; guestPhone: string; guestIdNumber?: string; validFrom: string; validUntil: string; purpose?: string },
   ) {
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const [activeCount, monthCount] = await Promise.all([
+      this.prisma.guestPass.count({ where: { userId, status: 'ACTIVE' } }),
+      this.prisma.guestPass.count({ where: { userId, createdAt: { gte: monthStart } } }),
+    ]);
+
+    if (activeCount >= GUEST_PASS_MAX_ACTIVE) {
+      throw new BadRequestException(
+        `You have reached the limit of ${GUEST_PASS_MAX_ACTIVE} active guest passes. Revoke an existing pass before creating a new one.`,
+      );
+    }
+    if (monthCount >= GUEST_PASS_MAX_PER_MONTH) {
+      throw new BadRequestException(
+        `You have reached the monthly limit of ${GUEST_PASS_MAX_PER_MONTH} guest passes.`,
+      );
+    }
+
     const pass = await this.prisma.guestPass.create({
       data: {
         userId,
