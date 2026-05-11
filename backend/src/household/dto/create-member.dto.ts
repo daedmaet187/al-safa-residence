@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsEnum, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsEnum, IsOptional, Matches } from 'class-validator';
 import { HouseholdAccess } from '@prisma/client';
 
 export class CreateMemberDto {
@@ -8,6 +8,7 @@ export class CreateMemberDto {
 
   @IsString()
   @IsNotEmpty()
+  @Matches(/^\+?\d{10,15}$/, { message: 'Phone must be 10–15 digits (e.g. 07501234567 or +9647501234567)' })
   phone: string;
 
   @IsString()

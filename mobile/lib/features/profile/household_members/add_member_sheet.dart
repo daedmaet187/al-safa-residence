@@ -22,12 +22,15 @@ class AddMemberSheet extends ConsumerStatefulWidget {
 }
 
 class _AddMemberSheetState extends ConsumerState<AddMemberSheet> {
+  final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
   String _relationship = _relationships.first;
   HouseholdAccess _accessLevel = HouseholdAccess.limited;
   bool _isLoading = false;
   String? _error;
+
+  static final _phoneRegex = RegExp(r'^\+?\d{10,15}$');
 
   @override
   void dispose() {
@@ -37,13 +40,10 @@ class _AddMemberSheetState extends ConsumerState<AddMemberSheet> {
   }
 
   Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+
     final name = _nameCtrl.text.trim();
     final phone = _phoneCtrl.text.trim();
-
-    if (name.isEmpty || phone.isEmpty) {
-      setState(() => _error = 'Please fill in all required fields');
-      return;
-    }
 
     setState(() { _isLoading = true; _error = null; });
     try {
@@ -91,23 +91,42 @@ class _AddMemberSheetState extends ConsumerState<AddMemberSheet> {
               style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 20),
 
-          TextField(
-            controller: _nameCtrl,
-            decoration: const InputDecoration(
-              labelText: 'Full Name',
-              prefixIcon: Icon(Icons.person_outline_rounded),
+          Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                TextFormField(
+                  controller: _nameCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Full Name',
+                    prefixIcon: Icon(Icons.person_outline_rounded),
+                  ),
+                  textCapitalization: TextCapitalization.words,
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) return 'Name is required';
+                    if (v.trim().length < 2) return 'Enter a valid name';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 14),
+                TextFormField(
+                  controller: _phoneCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Phone Number',
+                    hintText: '+964 750 123 4567',
+                    prefixIcon: Icon(Icons.phone_outlined),
+                  ),
+                  keyboardType: TextInputType.phone,
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) return 'Phone is required';
+                    if (!_phoneRegex.hasMatch(v.trim())) {
+                      return 'Enter a valid phone number (10–15 digits)';
+                    }
+                    return null;
+                  },
+                ),
+              ],
             ),
-            textCapitalization: TextCapitalization.words,
-          ),
-          const SizedBox(height: 14),
-
-          TextField(
-            controller: _phoneCtrl,
-            decoration: const InputDecoration(
-              labelText: 'Phone Number',
-              prefixIcon: Icon(Icons.phone_outlined),
-            ),
-            keyboardType: TextInputType.phone,
           ),
           const SizedBox(height: 14),
 
