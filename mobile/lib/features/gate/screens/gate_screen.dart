@@ -213,8 +213,20 @@ class _GuestPassCard extends ConsumerWidget {
           ),
         );
       },
-      onDismissed: (_) {
-        ref.read(gateNotifierProvider.notifier).revokePass(pass.id);
+      onDismissed: (_) async {
+        try {
+          await ref.read(gateNotifierProvider.notifier).revokePass(pass.id);
+        } catch (_) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Failed to revoke pass. Please try again.'),
+                backgroundColor: AppColors.danger,
+              ),
+            );
+            ref.invalidate(guestPassesProvider);
+          }
+        }
       },
       child: GestureDetector(
         onTap: () => context.push('/home/gate/${pass.id}'),

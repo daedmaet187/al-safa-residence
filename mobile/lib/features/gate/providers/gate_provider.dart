@@ -83,12 +83,9 @@ class GateNotifier extends AsyncNotifier<void> {
   }
 
   Future<void> revokePass(String passId) async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      final dio = ref.read(dioProvider);
-      await dio.delete('/gate/passes/$passId');
-      ref.invalidate(guestPassesProvider);
-    });
+    final dio = ref.read(dioProvider);
+    await dio.delete('/gate/passes/$passId');
+    ref.invalidate(guestPassesProvider);
   }
 }
 
