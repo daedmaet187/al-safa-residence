@@ -122,4 +122,13 @@ export class ResidentController {
   ) {
     return this.residentService.changePassword(user.id, dto.currentPassword, dto.newPassword);
   }
+
+  // ── Support ────────────────────────────────────────────────────────────────
+
+  @Get('support/info')
+  @RequireAccess('LIMITED')
+  @ApiOperation({ summary: 'Get FAQ and contact info for help & support screen' })
+  getSupportInfo() {
+    return this.residentService.getSupportInfo();
+  }
 }

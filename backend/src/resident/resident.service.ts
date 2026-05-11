@@ -331,4 +331,38 @@ export class ResidentService {
     await this.prisma.user.update({ where: { id: userId }, data: { passwordHash: hash } });
     return { message: 'Password changed successfully' };
   }
+
+  // ── Support ────────────────────────────────────────────────────────────────
+
+  getSupportInfo() {
+    return {
+      contact: {
+        phone: '+964 770 000 0000',
+        email: 'support@al-safa-residence.iq',
+        workingHours: 'Sun–Thu, 8:00 AM – 6:00 PM',
+      },
+      faq: [
+        {
+          question: 'How do I pay my monthly bill?',
+          answer: 'Go to Payments in the main menu, select the bill, and choose a payment method.',
+        },
+        {
+          question: 'How do I submit a maintenance request?',
+          answer: 'Tap Maintenance in the menu, then tap the + button to describe the issue.',
+        },
+        {
+          question: 'How do I create a guest pass?',
+          answer: 'Go to Gate Access and tap + New Pass. Enter your guest\'s details and validity period.',
+        },
+        {
+          question: 'How do I add a household member?',
+          answer: 'Open Profile → Household Members and tap Add Member. Set their access level.',
+        },
+        {
+          question: 'Who do I contact for urgent issues?',
+          answer: 'Call the building management directly at +964 770 000 0000 or use Chat Support.',
+        },
+      ],
+    };
+  }
 }

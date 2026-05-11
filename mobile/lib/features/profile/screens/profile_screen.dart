@@ -139,7 +139,7 @@ class ProfileScreen extends ConsumerWidget {
           _SectionTile(
             icon: Icons.help_outline_rounded,
             title: 'Help & Support',
-            onTap: () {},
+            onTap: () => context.push('/home/support'),
           ),
 
           const SizedBox(height: 8),
