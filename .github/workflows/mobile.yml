@@ -78,20 +78,7 @@ jobs:
       - name: Build debug APK
         run: cd mobile && flutter build apk --debug
 
-      - name: Upload APK to S3
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: eu-central-1
-        run: |
-          APK_KEY="apk/al-safa-residence-${{ github.sha }}.apk"
-          aws s3 cp mobile/build/app/outputs/flutter-apk/app-debug.apk \
-            s3://al-safa-residence-uploads-590184057237/$APK_KEY
-          echo "✅ APK uploaded to S3:"
-          echo "https://al-safa-residence-uploads-590184057237.s3.eu-central-1.amazonaws.com/$APK_KEY"
-
       - name: Upload APK artifact
-        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: al-safa-residence-${{ github.sha }}.apk
