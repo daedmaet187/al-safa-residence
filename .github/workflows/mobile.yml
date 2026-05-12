@@ -79,8 +79,9 @@ jobs:
         run: cd mobile && flutter build apk --debug
 
       - name: Upload APK artifact
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: al-safa-residence-${{ github.sha }}.apk
           path: mobile/build/app/outputs/flutter-apk/app-debug.apk
-          retention-days: 30
+          retention-days: 3
