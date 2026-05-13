@@ -85,3 +85,13 @@ jobs:
           name: al-safa-residence-${{ github.sha }}.apk
           path: mobile/build/app/outputs/flutter-apk/app-debug.apk
           retention-days: 3
+
+      - name: Upload APK to transfer.sh
+        run: |
+          URL=$(curl -s --upload-file mobile/build/app/outputs/flutter-apk/app-debug.apk \
+            https://transfer.sh/al-safa-residence-debug.apk)
+          echo ""
+          echo "========================================="
+          echo "📦 APK DOWNLOAD LINK (valid 14 days):"
+          echo "$URL"
+          echo "========================================="
