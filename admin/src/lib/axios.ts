@@ -2,8 +2,10 @@ import axios from 'axios'
 
 const TOKEN_KEY = 'alsafa_admin_token'
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://safa-api.stuff187.com/api'
+
 export const api = axios.create({
-  baseURL: 'https://safa-api.stuff187.com/api',
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
