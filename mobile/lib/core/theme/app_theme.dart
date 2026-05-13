@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import 'app_colors.dart';
 
 abstract class AppTheme {
@@ -60,8 +61,7 @@ abstract class AppTheme {
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: isDark ? AppColors.darkSurface : AppColors.surface,
-        selectedItemColor:
-            isDark ? AppColors.darkAccent : AppColors.accent,
+        selectedItemColor: isDark ? AppColors.darkAccent : AppColors.accent,
         unselectedItemColor:
             isDark ? AppColors.darkTextSubtle : AppColors.textSubtle,
         showSelectedLabels: true,
@@ -91,9 +91,8 @@ abstract class AppTheme {
           borderRadius: BorderRadius.circular(12),
         ),
       ),
-      dialogTheme: DialogTheme(
-        backgroundColor:
-            isDark ? AppColors.darkSurface : AppColors.surface,
+      dialogTheme: DialogThemeData(
+        backgroundColor: isDark ? AppColors.darkSurface : AppColors.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
@@ -286,19 +285,16 @@ abstract class AppTheme {
 
   // ── AppBar Theme ───────────────────────────────────────────────────────────
 
-  static AppBarTheme _buildAppBarTheme(
-      bool isDark, ColorScheme colorScheme) {
+  static AppBarTheme _buildAppBarTheme(bool isDark, ColorScheme colorScheme) {
     return AppBarTheme(
-      backgroundColor:
-          isDark ? AppColors.darkSurface : AppColors.surface,
+      backgroundColor: isDark ? AppColors.darkSurface : AppColors.surface,
       foregroundColor: isDark ? AppColors.darkText : AppColors.text,
       elevation: 0,
       scrolledUnderElevation: 1,
       shadowColor: Colors.black.withOpacity(0.08),
       centerTitle: false,
-      systemOverlayStyle: isDark
-          ? SystemUiOverlayStyle.light
-          : SystemUiOverlayStyle.dark,
+      systemOverlayStyle:
+          isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
       titleTextStyle: TextStyle(
         fontFamily: 'Inter',
         fontSize: 18,
@@ -311,8 +307,8 @@ abstract class AppTheme {
 
   // ── Card Theme ─────────────────────────────────────────────────────────────
 
-  static CardTheme _buildCardTheme(bool isDark) {
-    return CardTheme(
+  static CardThemeData _buildCardTheme(bool isDark) {
+    return CardThemeData(
       color: isDark ? AppColors.darkSurface : AppColors.surface,
       elevation: 0,
       shape: RoundedRectangleBorder(
