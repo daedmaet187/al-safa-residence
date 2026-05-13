@@ -52,46 +52,42 @@ export class AuthService {
   async sendOtp(rawPhone: string, role: 'RESIDENT' | 'SECURITY' = 'RESIDENT') {
     const phone = this.normalizePhone(rawPhone);
 
-    if (role === 'SECURITY') {
-      const guard = await this.prisma.user.findFirst({ where: { phone, role: Role.SECURITY } });
-      if (!guard || guard.deletedAt || !guard.isActive) {
-        throw new NotFoundException('Phone not registered as SECURITY');
-      }
+    // Auto-detect role: if phone belongs to a SECURITY user, treat as guard regardless of passed role
+    const guardUser = await this.prisma.user.findFirst({ where: { phone, role: Role.SECURITY } });
+    if (guardUser && !guardUser.deletedAt && guardUser.isActive) {
       // TODO: integrate SMS provider — for now OTP is always 123456
-      return { message: 'OTP sent', phone };
+      return { message: 'OTP sent', phone, role: 'SECURITY' };
     }
 
-    // RESIDENT flow: match resident users or household members (never SECURITY/ADMIN)
+    // RESIDENT flow: match resident users or household members
     const user = await this.prisma.user.findFirst({ where: { phone, role: Role.RESIDENT } });
     if (user && !user.deletedAt && user.isActive) {
       // TODO: integrate SMS provider — for now OTP is always 123456
-      return { message: 'OTP sent', phone };
+      return { message: 'OTP sent', phone, role: 'RESIDENT' };
     }
 
     const member = await this.prisma.householdMember.findFirst({ where: { phone } });
     if (member && member.isActive) {
       // TODO: integrate SMS provider — for now OTP is always 123456
-      return { message: 'OTP sent', phone };
+      return { message: 'OTP sent', phone, role: 'RESIDENT' };
     }
 
-    throw new NotFoundException('Phone not registered as RESIDENT');
+    throw new NotFoundException('Phone not registered');
   }
 
   // ── Mobile: verify OTP by phone ────────────────────────────────────────────
   async verifyOtp(rawPhone: string, otp: string, role: 'RESIDENT' | 'SECURITY' = 'RESIDENT') {
     const phone = this.normalizePhone(rawPhone);
 
-    if (role === 'SECURITY') {
-      const guard = await this.prisma.user.findFirst({ where: { phone, role: Role.SECURITY } });
-      if (!guard || guard.deletedAt || !guard.isActive) {
-        throw new NotFoundException('Phone not registered as SECURITY');
-      }
+    // Auto-detect: check SECURITY first regardless of passed role
+    const guard = await this.prisma.user.findFirst({ where: { phone, role: Role.SECURITY } });
+    if (guard && !guard.deletedAt && guard.isActive) {
       if (otp !== DEFAULT_OTP) throw new UnauthorizedException('Invalid OTP');
       const tokens = await this.generateTokens(guard.id, guard.email ?? guard.phone, guard.role);
       return {
         ...tokens,
         role: guard.role,
-        actorType: 'resident',
+        actorType: 'guard',
         accessLevel: 'FULL',
         user: {
           id: guard.id,
@@ -104,6 +100,10 @@ export class AuthService {
         },
         units: [],
       };
+    }
+
+    if (role === 'SECURITY') {
+      throw new NotFoundException('Phone not registered as SECURITY');
     }
 
     // Try primary resident first
