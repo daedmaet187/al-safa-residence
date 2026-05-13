@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/status_chip.dart';
 import '../providers/gate_provider.dart';
@@ -19,11 +20,11 @@ class GateScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Gate Access'),
+        title: Text('gate.title'.tr()),
         actions: [
           IconButton(
             icon: const Icon(Icons.add_rounded),
-            tooltip: 'New Guest Pass',
+            tooltip: 'gate.new_guest_pass'.tr(),
             onPressed: () => context.push('/home/gate/create'),
           ),
         ],
@@ -50,7 +51,7 @@ class GateScreen extends ConsumerWidget {
               child: Column(
                 children: [
                   Text(
-                    'My Access QR',
+                    'gate.my_access_qr'.tr(),
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
@@ -91,7 +92,7 @@ class GateScreen extends ConsumerWidget {
                   ).animate().fadeIn(duration: 500.ms),
                   const SizedBox(height: 12),
                   Text(
-                    'Show this to security at the gate',
+                    'gate.show_to_security'.tr(),
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.75),
                       fontSize: 13,
@@ -107,12 +108,12 @@ class GateScreen extends ConsumerWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Guest Passes',
+                Text('gate.guest_passes'.tr(),
                     style: Theme.of(context).textTheme.titleMedium),
                 TextButton.icon(
                   onPressed: () => context.push('/home/gate/create'),
                   icon: const Icon(Icons.add_rounded, size: 16),
-                  label: const Text('New Pass'),
+                  label: Text('gate.new_pass'.tr()),
                   style: TextButton.styleFrom(
                     foregroundColor:
                         isDark ? AppColors.darkAccent : AppColors.accent,
@@ -127,7 +128,7 @@ class GateScreen extends ConsumerWidget {
                   child: Padding(
                       padding: EdgeInsets.all(32),
                       child: CircularProgressIndicator())),
-              error: (e, _) => Center(child: Text('Error: $e')),
+              error: (e, _) => Center(child: Text('${common.error'.tr()}: $e')),
               data: (passes) {
                 if (passes.isEmpty) {
                   return Container(
@@ -150,10 +151,10 @@ class GateScreen extends ConsumerWidget {
                                 ? AppColors.darkTextSubtle
                                 : AppColors.textSubtle),
                         const SizedBox(height: 12),
-                        Text('No active guest passes',
+                        Text('gate.no_active_passes'.tr(),
                             style: Theme.of(context).textTheme.titleSmall),
                         const SizedBox(height: 4),
-                        Text('Create a pass for visitors',
+                        Text('gate.create_pass_hint'.tr(),
                             style: Theme.of(context).textTheme.bodySmall),
                       ],
                     ),
@@ -199,16 +200,16 @@ class _GuestPassCard extends ConsumerWidget {
         return await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: const Text('Revoke Pass?'),
-            content: Text('Remove access for ${pass.guestName}?'),
+            title: Text('gate.revoke_pass'.tr()),
+            content: Text('gate.revoke_confirm'.tr(namedArgs: {'name': pass.guestName})),
             actions: [
               TextButton(
                   onPressed: () => Navigator.pop(ctx, false),
-                  child: const Text('Cancel')),
+                  child: Text('common.cancel'.tr())),
               TextButton(
                   onPressed: () => Navigator.pop(ctx, true),
-                  child: const Text('Revoke',
-                      style: TextStyle(color: AppColors.danger))),
+                  child: Text('gate.revoke'.tr(),
+                      style: const TextStyle(color: AppColors.danger))),
             ],
           ),
         );
@@ -219,8 +220,8 @@ class _GuestPassCard extends ConsumerWidget {
         } catch (_) {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Failed to revoke pass. Please try again.'),
+              SnackBar(
+                content: Text('gate.revoke_failed'.tr()),
                 backgroundColor: AppColors.danger,
               ),
             );

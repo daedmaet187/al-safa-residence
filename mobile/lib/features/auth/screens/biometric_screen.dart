@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/storage/secure_storage.dart';
 import '../../../shared/widgets/gold_button.dart';
@@ -16,7 +17,7 @@ class BiometricScreen extends ConsumerStatefulWidget {
 class _BiometricScreenState extends ConsumerState<BiometricScreen> {
   final LocalAuthentication _localAuth = LocalAuthentication();
   bool _isLoading = true;
-  bool _isSetupMode = false; // true = first time offer, false = verify mode
+  bool _isSetupMode = false;
   bool _showPinFallback = false;
   final _pinCtrl = TextEditingController();
   String? _pinError;
@@ -39,11 +40,9 @@ class _BiometricScreenState extends ConsumerState<BiometricScreen> {
     if (!mounted) return;
 
     if (alreadySetup) {
-      // Verify mode — auto-trigger biometric immediately
       setState(() { _isSetupMode = false; _isLoading = false; });
       await _verify();
     } else {
-      // First time — offer to set up
       setState(() { _isSetupMode = true; _isLoading = false; });
     }
   }
@@ -53,21 +52,19 @@ class _BiometricScreenState extends ConsumerState<BiometricScreen> {
     try {
       final canCheck = await _localAuth.canCheckBiometrics;
       if (!canCheck) {
-        // Device has no biometric — go straight to PIN
         setState(() { _isLoading = false; _showPinFallback = true; });
         return;
       }
       final authenticated = await _localAuth.authenticate(
-        localizedReason: 'Verify your identity to continue',
+        localizedReason: 'biometric.use_biometric_continue'.tr(),
         options: const AuthenticationOptions(
           stickyAuth: true,
-          biometricOnly: false, // allow PIN fallback from system
+          biometricOnly: false,
         ),
       );
       if (authenticated && mounted) {
         await _goHome();
       } else if (mounted) {
-        // User cancelled — show PIN fallback
         setState(() { _isLoading = false; _showPinFallback = true; });
       }
     } catch (_) {
@@ -81,7 +78,7 @@ class _BiometricScreenState extends ConsumerState<BiometricScreen> {
       final canCheck = await _localAuth.canCheckBiometrics;
       if (!canCheck) { await _skip(); return; }
       final authenticated = await _localAuth.authenticate(
-        localizedReason: 'Enable biometric login for quick access',
+        localizedReason: 'biometric.biometric_description'.tr(),
         options: const AuthenticationOptions(biometricOnly: true, stickyAuth: true),
       );
       if (authenticated && mounted) {
@@ -112,15 +109,12 @@ class _BiometricScreenState extends ConsumerState<BiometricScreen> {
     }
   }
 
-  // Simple 4-digit PIN — uses last 4 of phone number stored in secure storage
   Future<void> _verifyPin() async {
     final pin = _pinCtrl.text.trim();
-    // PIN = last 4 digits of stored auth token hash (simple demo PIN: 1234)
-    // In production this would be a real stored PIN
     if (pin == '1234') {
       if (mounted) await _goHome();
     } else {
-      setState(() => _pinError = 'Incorrect PIN. Try again.');
+      setState(() => _pinError = 'biometric.incorrect_pin'.tr());
       _pinCtrl.clear();
     }
   }
@@ -158,18 +152,18 @@ class _BiometricScreenState extends ConsumerState<BiometricScreen> {
                 child: const Icon(Icons.fingerprint_rounded, color: Colors.white, size: 56),
               ),
               const SizedBox(height: 32),
-              Text('Verify Identity', style: Theme.of(context).textTheme.headlineMedium, textAlign: TextAlign.center),
+              Text('biometric.verify_identity'.tr(), style: Theme.of(context).textTheme.headlineMedium, textAlign: TextAlign.center),
               const SizedBox(height: 8),
-              Text('Use biometric to continue',
+              Text('biometric.use_biometric_continue'.tr(),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: isDark ? AppColors.darkTextMuted : AppColors.textMuted),
                   textAlign: TextAlign.center),
               const SizedBox(height: 40),
-              GoldButton(label: 'Use Biometric', icon: Icons.fingerprint_rounded, isLoading: _isLoading, onPressed: _verify),
+              GoldButton(label: 'biometric.use_biometric'.tr(), icon: Icons.fingerprint_rounded, isLoading: _isLoading, onPressed: _verify),
               const SizedBox(height: 12),
               TextButton(
                 onPressed: () => setState(() => _showPinFallback = true),
-                child: const Text('Use PIN instead'),
+                child: Text('biometric.use_pin_instead'.tr()),
               ),
             ],
           ),
@@ -196,9 +190,9 @@ class _BiometricScreenState extends ConsumerState<BiometricScreen> {
                     color: isDark ? AppColors.darkPrimary : AppColors.primary, size: 40),
               ),
               const SizedBox(height: 28),
-              Text('Enter PIN', style: Theme.of(context).textTheme.headlineMedium, textAlign: TextAlign.center),
+              Text('biometric.enter_pin'.tr(), style: Theme.of(context).textTheme.headlineMedium, textAlign: TextAlign.center),
               const SizedBox(height: 8),
-              Text('Enter your 4-digit PIN to continue',
+              Text('biometric.enter_4digit_pin'.tr(),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: isDark ? AppColors.darkTextMuted : AppColors.textMuted),
                   textAlign: TextAlign.center),
@@ -212,7 +206,7 @@ class _BiometricScreenState extends ConsumerState<BiometricScreen> {
                 style: Theme.of(context).textTheme.headlineMedium,
                 decoration: InputDecoration(
                   counterText: '',
-                  hintText: '• • • •',
+                  hintText: 'biometric.pin_hint'.tr(),
                   errorText: _pinError,
                 ),
                 onChanged: (v) {
@@ -221,11 +215,11 @@ class _BiometricScreenState extends ConsumerState<BiometricScreen> {
                 },
               ),
               const SizedBox(height: 24),
-              GoldButton(label: 'Confirm', icon: Icons.check_rounded, onPressed: _verifyPin),
+              GoldButton(label: 'common.confirm'.tr(), icon: Icons.check_rounded, onPressed: _verifyPin),
               const SizedBox(height: 12),
               TextButton(
                 onPressed: _verify,
-                child: const Text('Try biometric again'),
+                child: Text('biometric.try_biometric_again'.tr()),
               ),
             ],
           ),
@@ -252,18 +246,18 @@ class _BiometricScreenState extends ConsumerState<BiometricScreen> {
                 child: const Icon(Icons.fingerprint_rounded, color: Colors.white, size: 64),
               ),
               const SizedBox(height: 40),
-              Text('Enable Quick Login', style: Theme.of(context).textTheme.headlineMedium, textAlign: TextAlign.center),
+              Text('biometric.enable_quick_login'.tr(), style: Theme.of(context).textTheme.headlineMedium, textAlign: TextAlign.center),
               const SizedBox(height: 12),
-              Text('Use Face ID or Fingerprint to verify your identity every time you open the app.',
+              Text('biometric.biometric_description'.tr(),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: isDark ? AppColors.darkTextMuted : AppColors.textMuted),
                   textAlign: TextAlign.center),
               const SizedBox(height: 48),
-              GoldButton(label: 'Enable Biometric', icon: Icons.fingerprint_rounded, isLoading: _isLoading, onPressed: _enableBiometric),
+              GoldButton(label: 'biometric.enable_biometric'.tr(), icon: Icons.fingerprint_rounded, isLoading: _isLoading, onPressed: _enableBiometric),
               const SizedBox(height: 16),
               TextButton(
                 onPressed: _skip,
-                child: Text('Skip for now', style: TextStyle(color: isDark ? AppColors.darkTextMuted : AppColors.textMuted)),
+                child: Text('biometric.skip_for_now'.tr(), style: TextStyle(color: isDark ? AppColors.darkTextMuted : AppColors.textMuted)),
               ),
             ],
           ),

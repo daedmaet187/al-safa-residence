@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/status_chip.dart';
 import '../providers/maintenance_provider.dart';
@@ -16,18 +17,18 @@ class MaintenanceScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Maintenance'),
+        title: Text('maintenance.title'.tr()),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push('/home/maintenance/create'),
         backgroundColor: isDark ? AppColors.darkPrimary : AppColors.primary,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add_rounded),
-        label: const Text('New Request'),
+        label: Text('maintenance.new_request'.tr()),
       ),
       body: requestsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(child: Text('${common.error'.tr()}: $e')),
         data: (requests) {
           if (requests.isEmpty) {
             return Center(
@@ -40,10 +41,10 @@ class MaintenanceScreen extends ConsumerWidget {
                           ? AppColors.darkTextSubtle
                           : AppColors.textSubtle),
                   const SizedBox(height: 16),
-                  Text('No maintenance requests',
+                  Text('maintenance.no_requests'.tr(),
                       style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 8),
-                  Text('Submit a new request if something needs fixing.',
+                  Text('maintenance.no_requests_hint'.tr(),
                       style: Theme.of(context).textTheme.bodySmall,
                       textAlign: TextAlign.center),
                 ],

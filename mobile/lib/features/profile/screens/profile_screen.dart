@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/theme_provider.dart';
 import '../providers/profile_provider.dart';
@@ -15,7 +16,7 @@ class ProfileScreen extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Profile')),
+      appBar: AppBar(title: Text('profile.title'.tr())),
       body: profileAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _buildBody(context, ref, null, isDark),
@@ -61,7 +62,7 @@ class ProfileScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 14),
                 Text(
-                  user?.name ?? 'Resident',
+                  user?.name ?? 'home.resident'.tr(),
                   style: Theme.of(context).textTheme.headlineSmall,
                 ),
                 const SizedBox(height: 4),
@@ -88,7 +89,7 @@ class ProfileScreen extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    'To update your information, contact admin',
+                    'profile.update_info_hint'.tr(),
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: isDark ? AppColors.darkPrimary : AppColors.primary,
                     ),
@@ -102,7 +103,7 @@ class ProfileScreen extends ConsumerWidget {
 
           _SectionTile(
             icon: Icons.badge_outlined,
-            title: 'ID Documents',
+            title: 'profile.id_documents'.tr(),
             onTap: () {},
           ),
           Consumer(builder: (ctx, ref, _) {
@@ -110,10 +111,14 @@ class ProfileScreen extends ConsumerWidget {
             if (authState?.isResident != true) return const SizedBox.shrink();
             return _SectionTile(
               icon: Icons.people_alt_outlined,
-              title: 'Household Members',
+              title: 'profile.household_members'.tr(),
               onTap: () => context.push('/home/household-members'),
             );
           }),
+          
+          // Language toggle
+          _LanguageTile(),
+          
           Consumer(builder: (ctx, ref, _) {
             final themeMode = ref.watch(themeModeProvider);
             final isDarkNow = themeMode == ThemeMode.dark ||
@@ -121,7 +126,7 @@ class ProfileScreen extends ConsumerWidget {
                     MediaQuery.platformBrightnessOf(ctx) == Brightness.dark);
             return ListTile(
               leading: Icon(isDarkNow ? Icons.light_mode_rounded : Icons.dark_mode_rounded),
-              title: Text(isDarkNow ? 'Switch to Light Mode' : 'Switch to Dark Mode',
+              title: Text(isDarkNow ? 'profile.switch_to_light'.tr() : 'profile.switch_to_dark'.tr(),
                   style: Theme.of(ctx).textTheme.titleSmall),
               trailing: Switch(
                 value: isDarkNow,
@@ -133,12 +138,12 @@ class ProfileScreen extends ConsumerWidget {
           }),
           _SectionTile(
             icon: Icons.chat_bubble_outline_rounded,
-            title: 'Chat Support',
+            title: 'profile.chat_support'.tr(),
             onTap: () => context.push('/home/chat'),
           ),
           _SectionTile(
             icon: Icons.help_outline_rounded,
-            title: 'Help & Support',
+            title: 'profile.help_support'.tr(),
             onTap: () => context.push('/home/support'),
           ),
 
@@ -146,14 +151,14 @@ class ProfileScreen extends ConsumerWidget {
 
           _SectionTile(
             icon: Icons.logout_rounded,
-            title: 'Sign Out',
+            title: 'profile.sign_out'.tr(),
             isDestructive: true,
             onTap: () => _confirmLogout(context, ref),
           ),
 
           const SizedBox(height: 32),
           Text(
-            'Al-Safa Residence v1.0.0',
+            'profile.version'.tr(namedArgs: {'version': '1.0.0'}),
             style: Theme.of(context).textTheme.labelSmall,
           ),
           const SizedBox(height: 24),
@@ -166,12 +171,12 @@ class ProfileScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Sign Out'),
-        content: const Text('Are you sure you want to sign out?'),
+        title: Text('profile.sign_out'.tr()),
+        content: Text('profile.sign_out_confirm'.tr()),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel')),
+              child: Text('common.cancel'.tr())),
           TextButton(
             style: TextButton.styleFrom(foregroundColor: AppColors.danger),
             onPressed: () async {
@@ -179,9 +184,129 @@ class ProfileScreen extends ConsumerWidget {
               await ref.read(authProvider.notifier).logout();
               if (context.mounted) context.go('/login');
             },
-            child: const Text('Sign Out'),
+            child: Text('profile.sign_out'.tr()),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _LanguageTile extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final currentLocale = context.locale;
+    final isArabic = currentLocale.languageCode == 'ar';
+    
+    return ListTile(
+      leading: const Icon(Icons.language_rounded),
+      title: Text('profile.language'.tr(),
+          style: Theme.of(context).textTheme.titleSmall),
+      trailing: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.darkSurfaceRaised
+              : AppColors.background,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          isArabic ? 'profile.arabic'.tr() : 'profile.english'.tr(),
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+      onTap: () => _showLanguageDialog(context),
+    );
+  }
+
+  void _showLanguageDialog(BuildContext context) {
+    final currentLocale = context.locale;
+    
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('profile.language'.tr()),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _LanguageOption(
+              title: 'profile.arabic'.tr(),
+              subtitle: 'العربية',
+              isSelected: currentLocale.languageCode == 'ar',
+              onTap: () {
+                context.setLocale(const Locale('ar'));
+                Navigator.pop(ctx);
+              },
+            ),
+            const SizedBox(height: 8),
+            _LanguageOption(
+              title: 'profile.english'.tr(),
+              subtitle: 'English',
+              isSelected: currentLocale.languageCode == 'en',
+              onTap: () {
+                context.setLocale(const Locale('en'));
+                Navigator.pop(ctx);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LanguageOption extends StatelessWidget {
+  const _LanguageOption({
+    required this.title,
+    required this.subtitle,
+    required this.isSelected,
+    required this.onTap,
+  });
+  
+  final String title;
+  final String subtitle;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? (isDark ? AppColors.darkPrimaryLight : AppColors.primaryLight)
+              : (isDark ? AppColors.darkSurface : AppColors.surface),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected
+                ? (isDark ? AppColors.darkPrimary : AppColors.primary)
+                : (isDark ? AppColors.darkBorder : AppColors.border),
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: Theme.of(context).textTheme.titleSmall),
+                  Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
+                ],
+              ),
+            ),
+            if (isSelected)
+              Icon(Icons.check_circle_rounded,
+                  color: isDark ? AppColors.darkPrimary : AppColors.primary),
+          ],
+        ),
       ),
     );
   }

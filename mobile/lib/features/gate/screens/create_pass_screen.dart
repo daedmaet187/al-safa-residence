@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/gold_button.dart';
 import '../providers/gate_provider.dart';
@@ -67,7 +68,7 @@ class _CreatePassScreenState extends ConsumerState<CreatePassScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to create pass: $e')),
+        SnackBar(content: Text('maintenance.failed'.tr(namedArgs: {'error': e.toString()}))),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -79,7 +80,7 @@ class _CreatePassScreenState extends ConsumerState<CreatePassScreen> {
     final dateFmt = DateFormat('EEE, MMM d, y');
 
     return Scaffold(
-      appBar: AppBar(title: const Text('New Guest Pass')),
+      appBar: AppBar(title: Text('gate.new_guest_pass'.tr())),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Form(
@@ -87,47 +88,47 @@ class _CreatePassScreenState extends ConsumerState<CreatePassScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Guest Information',
+              Text('gate.guest_info'.tr(),
                   style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _nameCtrl,
                 textCapitalization: TextCapitalization.words,
-                decoration: const InputDecoration(
-                  labelText: 'Guest Name *',
-                  prefixIcon: Icon(Icons.person_outline_rounded),
+                decoration: InputDecoration(
+                  labelText: 'gate.guest_name'.tr(),
+                  prefixIcon: const Icon(Icons.person_outline_rounded),
                 ),
                 validator: (v) =>
-                    v == null || v.isEmpty ? 'Enter guest name' : null,
+                    v == null || v.isEmpty ? 'gate.enter_guest_name'.tr() : null,
               ),
               const SizedBox(height: 14),
               TextFormField(
                 controller: _phoneCtrl,
                 keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
-                  labelText: 'Phone Number *',
-                  prefixIcon: Icon(Icons.phone_outlined),
+                decoration: InputDecoration(
+                  labelText: 'gate.phone_number'.tr(),
+                  prefixIcon: const Icon(Icons.phone_outlined),
                 ),
                 validator: (v) =>
-                    v == null || v.isEmpty ? 'Enter phone number' : null,
+                    v == null || v.isEmpty ? 'gate.enter_phone'.tr() : null,
               ),
               const SizedBox(height: 14),
               TextFormField(
                 controller: _idCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'ID Number (optional)',
-                  prefixIcon: Icon(Icons.badge_outlined),
+                decoration: InputDecoration(
+                  labelText: 'gate.id_number_optional'.tr(),
+                  prefixIcon: const Icon(Icons.badge_outlined),
                 ),
               ),
               const SizedBox(height: 24),
-              Text('Valid Period',
+              Text('gate.valid_period'.tr(),
                   style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 14),
               Row(
                 children: [
                   Expanded(
                     child: _DateField(
-                      label: 'From',
+                      label: 'gate.from'.tr(),
                       value: dateFmt.format(_validFrom),
                       onTap: () => _pickDate(true),
                     ),
@@ -135,7 +136,7 @@ class _CreatePassScreenState extends ConsumerState<CreatePassScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: _DateField(
-                      label: 'Until',
+                      label: 'gate.until'.tr(),
                       value: dateFmt.format(_validUntil),
                       onTap: () => _pickDate(false),
                     ),
@@ -144,7 +145,7 @@ class _CreatePassScreenState extends ConsumerState<CreatePassScreen> {
               ),
               const SizedBox(height: 32),
               GoldButton(
-                label: 'Create Guest Pass',
+                label: 'gate.create_guest_pass'.tr(),
                 icon: Icons.qr_code_2_rounded,
                 isLoading: _isLoading,
                 onPressed: _submit,

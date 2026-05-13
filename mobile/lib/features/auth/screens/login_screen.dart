@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/app_logo.dart';
 import '../../../shared/widgets/gold_button.dart';
@@ -38,8 +39,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         SnackBar(
           content: Text(
             (e.toString().contains('No account') || e.toString().contains('not registered'))
-                ? 'No resident account found with this number. Contact your building admin.'
-                : 'Something went wrong. Try again.',
+                ? 'auth.no_account_error'.tr()
+                : 'auth.something_wrong'.tr(),
           ),
           backgroundColor: AppColors.danger,
         ),
@@ -69,12 +70,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       curve: Curves.easeOutBack),
               const SizedBox(height: 32),
               Text(
-                'Welcome',
+                'auth.welcome'.tr(),
                 style: Theme.of(context).textTheme.displaySmall,
               ).animate(delay: 100.ms).fadeIn().slideY(begin: 0.2),
               const SizedBox(height: 6),
               Text(
-                'Enter your phone number to receive a verification code',
+                'auth.enter_phone_hint'.tr(),
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: isDark
                         ? AppColors.darkTextMuted
@@ -90,20 +91,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       keyboardType: TextInputType.phone,
                       textInputAction: TextInputAction.done,
                       onFieldSubmitted: (_) => _submit(),
-                      decoration: const InputDecoration(
-                        labelText: 'Phone number',
-                        hintText: '+964 770 123 4567',
-                        prefixIcon: Icon(Icons.phone_outlined),
+                      decoration: InputDecoration(
+                        labelText: 'auth.phone_number'.tr(),
+                        hintText: 'auth.phone_hint'.tr(),
+                        prefixIcon: const Icon(Icons.phone_outlined),
                       ),
                       validator: (v) {
-                        if (v == null || v.trim().isEmpty) return 'Enter your phone number';
-                        if (v.trim().length < 7) return 'Enter a valid phone number';
+                        if (v == null || v.trim().isEmpty) return 'auth.enter_phone_error'.tr();
+                        if (v.trim().length < 7) return 'auth.valid_phone_error'.tr();
                         return null;
                       },
                     ).animate(delay: 200.ms).fadeIn().slideY(begin: 0.15),
                     const SizedBox(height: 24),
                     GoldButton(
-                      label: 'Send Code',
+                      label: 'auth.send_code'.tr(),
                       icon: Icons.arrow_forward_rounded,
                       isLoading: _isLoading,
                       onPressed: _submit,
@@ -116,12 +117,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Security staff? ',
+                    'auth.security_staff'.tr(),
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   TextButton(
                     onPressed: () => context.go('/security/login'),
-                    child: const Text('Guard login'),
+                    child: Text('auth.guard_login'.tr()),
                   ),
                 ],
               ),

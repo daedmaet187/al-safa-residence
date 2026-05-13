@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/gold_button.dart';
 
@@ -15,24 +16,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _pageCtrl = PageController();
   int _page = 0;
 
-  static const _slides = [
+  static final _slides = [
     _Slide(
       icon: Icons.home_rounded,
-      title: 'Manage Your Home',
-      body:
-          'Track your unit details, service history, and documents all in one place.',
+      titleKey: 'onboarding.manage_home_title',
+      bodyKey: 'onboarding.manage_home_body',
     ),
     _Slide(
       icon: Icons.qr_code_2_rounded,
-      title: 'Smart Gate Access',
-      body:
-          'Generate guest passes and QR codes. Share access instantly with visitors.',
+      titleKey: 'onboarding.smart_gate_title',
+      bodyKey: 'onboarding.smart_gate_body',
     ),
     _Slide(
       icon: Icons.receipt_long_rounded,
-      title: 'Pay Bills Easily',
-      body:
-          'View upcoming bills, track payments, and manage your finances with ease.',
+      titleKey: 'onboarding.pay_bills_title',
+      bodyKey: 'onboarding.pay_bills_body',
     ),
   ];
 
@@ -63,7 +61,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               alignment: Alignment.topRight,
               child: TextButton(
                 onPressed: () => context.go('/login'),
-                child: Text('Skip',
+                child: Text('common.skip'.tr(),
                     style: TextStyle(
                         color: isDark
                             ? AppColors.darkTextMuted
@@ -118,7 +116,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 curve: Curves.easeOutBack),
                         const SizedBox(height: 40),
                         Text(
-                          slide.title,
+                          slide.titleKey.tr(),
                           style:
                               Theme.of(context).textTheme.headlineMedium,
                           textAlign: TextAlign.center,
@@ -128,7 +126,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             .slideY(begin: 0.2),
                         const SizedBox(height: 12),
                         Text(
-                          slide.body,
+                          slide.bodyKey.tr(),
                           style: Theme.of(context)
                               .textTheme
                               .bodyLarge
@@ -173,7 +171,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
               child: GoldButton(
-                label: _page == _slides.length - 1 ? 'Get Started' : 'Next',
+                label: _page == _slides.length - 1 ? 'onboarding.get_started'.tr() : 'common.next'.tr(),
                 icon: _page == _slides.length - 1
                     ? Icons.check_rounded
                     : Icons.arrow_forward_rounded,
@@ -189,7 +187,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
 class _Slide {
   final IconData icon;
-  final String title;
-  final String body;
-  const _Slide({required this.icon, required this.title, required this.body});
+  final String titleKey;
+  final String bodyKey;
+  const _Slide({required this.icon, required this.titleKey, required this.bodyKey});
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/models/unit.dart';
 import '../../../shared/widgets/gold_button.dart';
@@ -31,14 +32,14 @@ class _MultiUnitScreenState extends ConsumerState<MultiUnitScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 16),
-              Text('Select Your Unit',
+              Text('multi_unit.select_unit'.tr(),
                       style: Theme.of(context).textTheme.headlineMedium)
                   .animate()
                   .fadeIn()
                   .slideY(begin: 0.2),
               const SizedBox(height: 8),
               Text(
-                'You have access to multiple units. Choose your primary unit.',
+                'multi_unit.multiple_units_hint'.tr(),
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: isDark
                         ? AppColors.darkTextMuted
@@ -64,7 +65,7 @@ class _MultiUnitScreenState extends ConsumerState<MultiUnitScreen> {
               ),
               const SizedBox(height: 24),
               GoldButton(
-                label: 'Continue',
+                label: 'multi_unit.continue'.tr(),
                 icon: Icons.arrow_forward_rounded,
                 onPressed: _selectedId != null
                     ? () async {
@@ -154,7 +155,7 @@ class _UnitOption extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Unit ${unit.number}',
+                  Text('home.unit'.tr(namedArgs: {'number': unit.number}),
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                           color: isSelected
                               ? (isDark
@@ -163,7 +164,11 @@ class _UnitOption extends StatelessWidget {
                               : null)),
                   const SizedBox(height: 2),
                   Text(
-                    '${unit.type} • ${unit.bedrooms}BR • Floor ${unit.floor}',
+                    'multi_unit.unit_info'.tr(namedArgs: {
+                      'type': unit.type,
+                      'bedrooms': unit.bedrooms.toString(),
+                      'floor': unit.floor.toString(),
+                    }),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   Text(

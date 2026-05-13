@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/gold_button.dart';
 import '../providers/auth_provider.dart';
@@ -47,7 +48,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Invalid OTP: ${e.toString()}')),
+        SnackBar(content: Text('auth.invalid_otp'.tr(namedArgs: {'error': e.toString()}))),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -60,7 +61,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Verification'),
+        title: Text('auth.verification'.tr()),
         leading: BackButton(onPressed: () => context.go('/login')),
       ),
       body: SafeArea(
@@ -84,11 +85,11 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                   size: 28,
                 ),),
               const SizedBox(height: 24),
-              Text('Enter OTP',
+              Text('auth.enter_otp'.tr(),
                       style: Theme.of(context).textTheme.headlineMedium),
               const SizedBox(height: 8),
               Text(
-                'We sent a 6-digit code to\n${widget.phone}',
+                'auth.otp_sent_to'.tr(namedArgs: {'phone': widget.phone}),
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: isDark
                         ? AppColors.darkTextMuted
@@ -142,7 +143,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
               ),
               const SizedBox(height: 32),
               GoldButton(
-                label: 'Verify',
+                label: 'auth.verify'.tr(),
                 icon: Icons.check_rounded,
                 isLoading: _isLoading,
                 onPressed: _verify,
@@ -152,7 +153,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                 child: TextButton.icon(
                   onPressed: () {},
                   icon: const Icon(Icons.refresh_rounded, size: 16),
-                  label: const Text('Resend code'),
+                  label: Text('auth.resend_code'.tr()),
                 ),
               ),
             ],

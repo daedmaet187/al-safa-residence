@@ -4,21 +4,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../core/network/dio_client.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/gold_button.dart';
 import '../providers/maintenance_provider.dart';
 
-// Keys are backend enum values; values are display labels
+// Keys are backend enum values; values are translation keys
 const _categoryMap = {
-  'PLUMBING': 'Plumbing',
-  'ELECTRICAL': 'Electrical',
-  'AC_HVAC': 'HVAC / AC',
-  'APPLIANCE': 'Appliances',
-  'CLEANING': 'Cleaning',
-  'PEST_CONTROL': 'Pest Control',
-  'STRUCTURAL': 'Structural',
-  'OTHER': 'Other',
+  'PLUMBING': 'maintenance.categories.plumbing',
+  'ELECTRICAL': 'maintenance.categories.electrical',
+  'AC_HVAC': 'maintenance.categories.ac_hvac',
+  'APPLIANCE': 'maintenance.categories.appliance',
+  'CLEANING': 'maintenance.categories.cleaning',
+  'PEST_CONTROL': 'maintenance.categories.pest_control',
+  'STRUCTURAL': 'maintenance.categories.structural',
+  'OTHER': 'maintenance.categories.other',
 };
 final _categories = _categoryMap.keys.toList();
 
@@ -57,16 +58,13 @@ class _CreateRequestScreenState extends ConsumerState<CreateRequestScreen> {
       final userId = DateTime.now().millisecondsSinceEpoch;
       final key = 'uploads/${file.name.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_')}_$userId.jpg';
 
-      // 1. Get presigned URL
       final presignedResp = await dio.post('/uploads/presigned', data: {
         'key': key,
         'contentType': 'image/jpeg',
         'contentLength': bytes.length,
       });
       final uploadUrl = presignedResp.data['uploadUrl'] as String;
-      // fileUrl reserved for future direct key usage
 
-      // 2. Upload to S3
       await Dio().put(
         uploadUrl,
         data: Stream.fromIterable([bytes]),
@@ -78,11 +76,10 @@ class _CreateRequestScreenState extends ConsumerState<CreateRequestScreen> {
         ),
       );
 
-      // 3. Store the S3 URL
       final s3Url = presignedResp.data['url'] as String? ?? uploadUrl.split('?')[0];
       setState(() => _photoUrls.add(s3Url));
     } catch (_) {
-      // If upload fails, skip photo silently (don't block request creation)
+      // If upload fails, skip photo silently
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -110,7 +107,7 @@ class _CreateRequestScreenState extends ConsumerState<CreateRequestScreen> {
             const SizedBox(height: 16),
             ListTile(
               leading: const Icon(Icons.camera_alt_rounded),
-              title: const Text('Take Photo'),
+              title: Text('maintenance.take_photo'.tr()),
               onTap: () {
                 Navigator.pop(ctx);
                 _pickImage(ImageSource.camera);
@@ -118,7 +115,7 @@ class _CreateRequestScreenState extends ConsumerState<CreateRequestScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.photo_library_rounded),
-              title: const Text('Choose from Gallery'),
+              title: Text('maintenance.choose_gallery'.tr()),
               onTap: () {
                 Navigator.pop(ctx);
                 _pickImage(ImageSource.gallery);
@@ -144,12 +141,12 @@ class _CreateRequestScreenState extends ConsumerState<CreateRequestScreen> {
       if (!mounted) return;
       context.pop();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Maintenance request submitted!')),
+        SnackBar(content: Text('maintenance.request_submitted'.tr())),
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed: $e')),
+        SnackBar(content: Text('maintenance.failed'.tr(namedArgs: {'error': e.toString()}))),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -161,7 +158,7 @@ class _CreateRequestScreenState extends ConsumerState<CreateRequestScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('New Request')),
+      appBar: AppBar(title: Text('maintenance.new_request'.tr())),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Form(
@@ -172,27 +169,27 @@ class _CreateRequestScreenState extends ConsumerState<CreateRequestScreen> {
               TextFormField(
                 controller: _titleCtrl,
                 textCapitalization: TextCapitalization.sentences,
-                decoration: const InputDecoration(
-                  labelText: 'Title *',
-                  prefixIcon: Icon(Icons.title_rounded),
-                  hintText: 'e.g. Leaking faucet in bathroom',
+                decoration: InputDecoration(
+                  labelText: 'maintenance.request_title'.tr(),
+                  prefixIcon: const Icon(Icons.title_rounded),
+                  hintText: 'maintenance.title_hint'.tr(),
                 ),
                 validator: (v) =>
-                    v == null || v.isEmpty ? 'Enter a title' : null,
+                    v == null || v.isEmpty ? 'maintenance.enter_title'.tr() : null,
               ),
               const SizedBox(height: 16),
 
               // Category dropdown
               DropdownButtonFormField<String>(
                 value: _category,
-                decoration: const InputDecoration(
-                  labelText: 'Category',
-                  prefixIcon: Icon(Icons.category_outlined),
+                decoration: InputDecoration(
+                  labelText: 'maintenance.category'.tr(),
+                  prefixIcon: const Icon(Icons.category_outlined),
                 ),
                 items: _categories
                     .map((c) => DropdownMenuItem(
                           value: c,
-                          child: Text(_categoryMap[c] ?? c),
+                          child: Text(_categoryMap[c]?.tr() ?? c),
                         ))
                     .toList(),
                 onChanged: (v) {
@@ -205,18 +202,18 @@ class _CreateRequestScreenState extends ConsumerState<CreateRequestScreen> {
                 controller: _descCtrl,
                 maxLines: 4,
                 textCapitalization: TextCapitalization.sentences,
-                decoration: const InputDecoration(
-                  labelText: 'Description *',
-                  hintText: 'Describe the issue in detail...',
+                decoration: InputDecoration(
+                  labelText: 'maintenance.description'.tr(),
+                  hintText: 'maintenance.description_hint'.tr(),
                   alignLabelWithHint: true,
                 ),
                 validator: (v) =>
-                    v == null || v.isEmpty ? 'Enter a description' : null,
+                    v == null || v.isEmpty ? 'maintenance.enter_description'.tr() : null,
               ),
               const SizedBox(height: 20),
 
               // Photo upload
-              Text('Photos (optional)',
+              Text('maintenance.photos_optional'.tr(),
                   style: Theme.of(context).textTheme.titleSmall),
               const SizedBox(height: 10),
               Wrap(
@@ -299,7 +296,7 @@ class _CreateRequestScreenState extends ConsumerState<CreateRequestScreen> {
 
               const SizedBox(height: 32),
               GoldButton(
-                label: 'Submit Request',
+                label: 'maintenance.submit_request'.tr(),
                 icon: Icons.send_rounded,
                 isLoading: _isLoading,
                 onPressed: _submit,

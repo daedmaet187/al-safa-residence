@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/section_header.dart';
 import '../../../shared/models/announcement.dart';
@@ -51,7 +52,7 @@ class HomeScreen extends ConsumerWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Good ${_greeting()},',
+                                  _greeting(),
                                   style: TextStyle(
                                     color: Colors.white.withOpacity(0.75),
                                     fontSize: 14,
@@ -60,7 +61,7 @@ class HomeScreen extends ConsumerWidget {
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  user?.name.split(' ').first ?? 'Resident',
+                                  user?.name.split(' ').first ?? 'home.resident'.tr(),
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 24,
@@ -91,7 +92,7 @@ class HomeScreen extends ConsumerWidget {
                                         color: Colors.white, size: 14),
                                     const SizedBox(width: 6),
                                     Text(
-                                      'Unit ${unit.number}',
+                                      'home.unit'.tr(namedArgs: {'number': unit.number}),
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 13,
@@ -146,7 +147,9 @@ class HomeScreen extends ConsumerWidget {
                                           color: Colors.white, size: 18),
                                       const SizedBox(width: 8),
                                       Text(
-                                        '${summary.overdueBills} overdue bill${summary.overdueBills > 1 ? 's' : ''}',
+                                        summary.overdueBills > 1
+                                            ? 'home.overdue_bills'.tr(namedArgs: {'count': summary.overdueBills.toString()})
+                                            : 'home.overdue_bill'.tr(namedArgs: {'count': summary.overdueBills.toString()}),
                                         style: const TextStyle(
                                             color: Colors.white,
                                             fontSize: 13,
@@ -156,8 +159,8 @@ class HomeScreen extends ConsumerWidget {
                                       GestureDetector(
                                         onTap: () =>
                                             context.go('/home/payments'),
-                                        child: const Text('Pay now',
-                                            style: TextStyle(
+                                        child: Text('home.pay_now'.tr(),
+                                            style: const TextStyle(
                                                 color: Colors.white,
                                                 fontWeight: FontWeight.w700,
                                                 fontSize: 13)),
@@ -184,7 +187,7 @@ class HomeScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Services',
+                  Text('home.services'.tr(),
                       style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 14),
                   GridView.count(
@@ -197,7 +200,7 @@ class HomeScreen extends ConsumerWidget {
                     children: [
                       _QuickAction(
                         icon: Icons.home_rounded,
-                        label: 'My Unit',
+                        labelKey: 'home.my_unit',
                         route: '/home/unit',
                         gradient: const LinearGradient(
                           colors: [AppColors.primary, AppColors.secondary],
@@ -205,7 +208,7 @@ class HomeScreen extends ConsumerWidget {
                       ),
                       _QuickAction(
                         icon: Icons.build_rounded,
-                        label: 'Maintenance',
+                        labelKey: 'home.maintenance',
                         route: '/home/maintenance',
                         gradient: const LinearGradient(
                           colors: [Color(0xFF7C3AED), Color(0xFF5B21B6)],
@@ -218,7 +221,7 @@ class HomeScreen extends ConsumerWidget {
                       ),
                       _QuickAction(
                         icon: Icons.receipt_long_rounded,
-                        label: 'Pay Bills',
+                        labelKey: 'home.pay_bills',
                         route: '/home/payments',
                         gradient: AppColors.goldGradient,
                         badgeAsync: summaryAsync.when(
@@ -230,7 +233,7 @@ class HomeScreen extends ConsumerWidget {
                       ),
                       _QuickAction(
                         icon: Icons.qr_code_2_rounded,
-                        label: 'Guest Pass',
+                        labelKey: 'home.guest_pass',
                         route: '/home/gate',
                         gradient: const LinearGradient(
                           colors: [Color(0xFF0369A1), Color(0xFF075985)],
@@ -243,7 +246,7 @@ class HomeScreen extends ConsumerWidget {
                       ),
                       _QuickAction(
                         icon: Icons.campaign_rounded,
-                        label: 'Updates',
+                        labelKey: 'home.updates',
                         route: '/home/community',
                         gradient: const LinearGradient(
                           colors: [Color(0xFF059669), Color(0xFF047857)],
@@ -251,7 +254,7 @@ class HomeScreen extends ConsumerWidget {
                       ),
                       _QuickAction(
                         icon: Icons.chat_bubble_rounded,
-                        label: 'Support',
+                        labelKey: 'home.support',
                         route: '/home/chat',
                         gradient: const LinearGradient(
                           colors: [Color(0xFF0891B2), Color(0xFF0E7490)],
@@ -259,7 +262,7 @@ class HomeScreen extends ConsumerWidget {
                       ),
                       _QuickAction(
                         icon: Icons.pool,
-                        label: 'Amenities',
+                        labelKey: 'home.amenities',
                         route: '/home/amenities',
                         gradient: const LinearGradient(
                           colors: [Color(0xFF0284C7), Color(0xFF0369A1)],
@@ -267,7 +270,7 @@ class HomeScreen extends ConsumerWidget {
                       ),
                       _QuickAction(
                         icon: Icons.person_rounded,
-                        label: 'Profile',
+                        labelKey: 'home.profile',
                         route: '/home/profile',
                         gradient: const LinearGradient(
                           colors: [Color(0xFFDB2777), Color(0xFFBE185D)],
@@ -297,8 +300,8 @@ class HomeScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       SectionHeader(
-                        title: 'Announcements',
-                        action: 'See all',
+                        title: 'home.announcements'.tr(),
+                        action: 'home.see_all'.tr(),
                         onAction: () => context.push('/home/community'),
                       ),
                       const SizedBox(height: 12),
@@ -318,9 +321,9 @@ class HomeScreen extends ConsumerWidget {
 
   String _greeting() {
     final hour = DateTime.now().hour;
-    if (hour < 12) return 'morning';
-    if (hour < 17) return 'afternoon';
-    return 'evening';
+    if (hour < 12) return 'home.good_morning'.tr();
+    if (hour < 17) return 'home.good_afternoon'.tr();
+    return 'home.good_evening'.tr();
   }
 
   void _showNotifications(BuildContext context, WidgetRef ref) {
@@ -336,14 +339,14 @@ class HomeScreen extends ConsumerWidget {
 class _QuickAction extends StatelessWidget {
   const _QuickAction({
     required this.icon,
-    required this.label,
+    required this.labelKey,
     required this.route,
     required this.gradient,
     this.badgeAsync = 0,
     this.badgeDanger = false,
   });
   final IconData icon;
-  final String label;
+  final String labelKey;
   final String route;
   final Gradient gradient;
   final int badgeAsync;
@@ -418,7 +421,7 @@ class _QuickAction extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              label,
+              labelKey.tr(),
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
                     fontWeight: FontWeight.w600,
@@ -474,7 +477,7 @@ class _AnnouncementPreview extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         if (announcement.isImportant)
-                          Text('IMPORTANT',
+                          Text('home.important'.tr(),
                               style: TextStyle(
                                 fontSize: 9,
                                 fontWeight: FontWeight.w700,
@@ -552,7 +555,7 @@ class _NotificationsSheet extends ConsumerWidget {
                 children: [
                   const Icon(Icons.notifications_outlined),
                   const SizedBox(width: 10),
-                  Text('Notifications',
+                  Text('home.notifications'.tr(),
                       style: Theme.of(context).textTheme.titleMedium),
                 ],
               ),
@@ -562,7 +565,7 @@ class _NotificationsSheet extends ConsumerWidget {
             Expanded(
               child: announcementsAsync.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (_, __) => const Center(child: Text('Could not load notifications')),
+                error: (_, __) => Center(child: Text('home.could_not_load_notifications'.tr())),
                 data: (items) {
                   if (items.isEmpty) {
                     return Center(
@@ -573,7 +576,7 @@ class _NotificationsSheet extends ConsumerWidget {
                               size: 56,
                               color: isDark ? AppColors.darkTextSubtle : AppColors.textSubtle),
                           const SizedBox(height: 12),
-                          Text('No notifications',
+                          Text('home.no_notifications'.tr(),
                               style: Theme.of(context).textTheme.titleSmall),
                         ],
                       ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/app_logo.dart';
 import '../providers/auth_provider.dart';
@@ -42,8 +43,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
           final token = await storage.getAuthToken();
           if (!mounted) return;
           if (token != null) {
-            // Token exists but /auth/me failed (network issue or token expired)
-            // Go to biometric if set up, otherwise login
             final hasBio = await storage.getHasBiometricSetup();
             if (!mounted) return;
             if (hasBio) {
@@ -52,7 +51,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
               context.go('/login');
             }
           } else {
-            // No token at all — show onboarding or login
             final seen = await storage.getHasSeenOnboarding();
             if (!mounted) return;
             if (seen) {
@@ -93,9 +91,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                         duration: 600.ms,
                         curve: Curves.easeOutBack),
                 const SizedBox(height: 28),
-                const Text(
-                  'Al-Safa Residence',
-                  style: TextStyle(
+                Text(
+                  'app_name'.tr(),
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 28,
                     fontWeight: FontWeight.w800,
@@ -107,7 +105,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                     .slideY(begin: 0.2, duration: 500.ms),
                 const SizedBox(height: 8),
                 Text(
-                  'Your home, managed.',
+                  'app_tagline'.tr(),
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.65),
                     fontSize: 15,
@@ -117,7 +115,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                     .animate(delay: 600.ms)
                     .fadeIn(duration: 500.ms),
                 const SizedBox(height: 60),
-                // Gold shimmer accent line
                 Container(
                   width: 48,
                   height: 3,
