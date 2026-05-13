@@ -7,7 +7,7 @@ import { useAmenityList, useDeactivateAmenity } from './-components/list/service
 import { AmenityForm } from './-components/amenity-form'
 import type { Amenity } from '@/types'
 
-export default function AmenitiesPage() {
+export function AmenitiesPage() {
   const [formOpen, setFormOpen] = useState(false)
   const [selectedAmenity, setSelectedAmenity] = useState<Amenity | null>(null)
 

@@ -207,7 +207,7 @@ const staffColumns: ColumnDef<StaffMember>[] = [
   },
 ]
 
-export default function StaffPage() {
+export function StaffPage() {
   const { data, isLoading } = useStaffList()
   const staff = data?.data ?? []
 

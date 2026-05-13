@@ -186,7 +186,7 @@ const maintenanceColumns: ColumnDef<MaintenanceRequest>[] = [
   { id: 'actions', header: '', cell: ({ row }) => <ActionsCell request={row.original} />, enableSorting: false },
 ]
 
-export default function MaintenancePage() {
+export function MaintenancePage() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [priorityFilter, setPriorityFilter] = useState('all')

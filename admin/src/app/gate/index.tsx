@@ -133,7 +133,7 @@ function GateLogsTab() {
   return <DataTable columns={columns} data={logs} searchPlaceholder="Search gate logs..." isLoading={isLoading} />
 }
 
-export default function GatePage() {
+export function GatePage() {
   return (
     <div className="space-y-5">
       <div>

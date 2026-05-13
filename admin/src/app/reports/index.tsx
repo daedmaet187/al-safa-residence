@@ -275,7 +275,7 @@ function GateSection() {
   )
 }
 
-export default function ReportsPage() {
+export function ReportsPage() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">

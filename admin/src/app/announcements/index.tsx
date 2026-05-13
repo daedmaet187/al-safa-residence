@@ -151,7 +151,7 @@ function AnnouncementCard({ announcement }: { announcement: Announcement }) {
   )
 }
 
-export default function AnnouncementsPage() {
+export function AnnouncementsPage() {
   const { data, isLoading } = useAnnouncementList()
   const announcements = data?.data ?? []
 

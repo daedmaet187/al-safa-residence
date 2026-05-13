@@ -9,7 +9,7 @@ import { useUnitList } from './-components/list/service'
 import { HouseholdMembersSection } from './-components/household-members'
 import type { Unit } from '@/types'
 
-export default function UnitsPage() {
+export function UnitsPage() {
   const [typeFilter, setTypeFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
   const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null)

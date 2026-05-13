@@ -1,10 +1,16 @@
-import { createFileRoute, Outlet } from '@tanstack/react-router'
+import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
 import { Sidebar } from '@/components/common/sidebar'
 import { DarkModeToggle } from '@/components/common/dark-mode-toggle'
 import { Bell } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 export const Route = createFileRoute('/_layout')({
+  beforeLoad: () => {
+    const token = localStorage.getItem('alsafa_admin_token')
+    if (!token) {
+      throw redirect({ to: '/login' })
+    }
+  },
   component: DashboardLayout,
 })
 

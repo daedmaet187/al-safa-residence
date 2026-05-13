@@ -173,7 +173,7 @@ function OverdueTab() {
   )
 }
 
-export default function BillingPage() {
+export function BillingPage() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">

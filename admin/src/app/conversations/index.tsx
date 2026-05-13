@@ -108,7 +108,7 @@ const columns: ColumnDef<Conversation>[] = [
   },
 ]
 
-export default function ConversationsPage() {
+export function ConversationsPage() {
   const [statusFilter, setStatusFilter] = useState('all')
 
   const params = {

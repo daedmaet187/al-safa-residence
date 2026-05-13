@@ -11,7 +11,7 @@ import { CreateResidentButton } from './-components/create-button'
 import { residentColumns } from './-components/list/table'
 import { useResidentList } from './-components/list/service'
 
-export default function ResidentsPage() {
+export function ResidentsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [roleFilter, setRoleFilter] = useState<string>('all')
 

@@ -13,7 +13,7 @@ const statusVariant: Record<string, 'warning' | 'success' | 'secondary'> = {
   cancelled: 'secondary',
 }
 
-export default function AmenityBookingsPage() {
+export function AmenityBookingsPage() {
   const [statusFilter, setStatusFilter] = useState('all')
 
   const params = statusFilter !== 'all' ? { status: statusFilter } : {}

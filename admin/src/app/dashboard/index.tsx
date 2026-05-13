@@ -87,7 +87,7 @@ const activityTypeColors: Record<string, 'success' | 'warning' | 'default' | 'ac
   resident: 'default',
 }
 
-export default function DashboardPage() {
+export function DashboardPage() {
   const { data: stats, isLoading } = useStats()
 
   return (
