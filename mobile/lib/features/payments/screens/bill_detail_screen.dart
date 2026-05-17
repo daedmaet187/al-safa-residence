@@ -64,6 +64,12 @@ class BillDetailScreen extends ConsumerWidget {
                       style: TextStyle(
                           color: Colors.white.withOpacity(0.8), fontSize: 14),
                     ),
+                    if (bill.status == BillStatus.paid && bill.paidAt != null)
+                      Text(
+                        'Paid on ${dateFmt.format(bill.paidAt!)}',
+                        style: TextStyle(
+                            color: Colors.white.withOpacity(0.8), fontSize: 14),
+                      ),
                   ],
                 ),
               ),

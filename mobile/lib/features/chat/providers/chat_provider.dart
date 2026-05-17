@@ -87,6 +87,13 @@ class ConversationDetailNotifier
       await dio.patch('/chat/conversations/$arg/read');
     } catch (_) {}
   }
+
+  Future<void> close() async {
+    final dio = ref.read(dioProvider);
+    await dio.patch('/chat/conversations/$arg/close');
+    ref.invalidate(conversationDetailProvider(arg));
+    ref.invalidate(conversationsProvider);
+  }
 }
 
 final conversationDetailProvider =

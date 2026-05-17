@@ -25,6 +25,7 @@ import type { Announcement } from '@/types'
 import {
   useAnnouncementList,
   useCreateAnnouncement,
+  useUpdateAnnouncement,
   useDeleteAnnouncement,
 } from './-components/service'
 
@@ -105,8 +106,91 @@ function CreateAnnouncementDialog() {
   )
 }
 
-function AnnouncementCard({ announcement }: { announcement: Announcement }) {
+function EditAnnouncementDialog({
+  announcement,
+  onClose,
+}: {
+  announcement: Announcement
+  onClose: () => void
+}) {
+  const { mutate, isPending } = useUpdateAnnouncement(announcement.id)
+  const form = useForm<AnnouncementValues>({
+    resolver: zodResolver(announcementSchema),
+    defaultValues: {
+      title: announcement.title,
+      body: announcement.body,
+      isImportant: announcement.isImportant,
+      expiresAt: announcement.expiresAt
+        ? announcement.expiresAt.slice(0, 10)
+        : '',
+    },
+  })
+
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>
+      <DialogContent className="max-w-xl">
+        <DialogHeader><DialogTitle>Edit Announcement</DialogTitle></DialogHeader>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit((v) =>
+              mutate(v, { onSuccess: onClose })
+            )}
+            className="space-y-4"
+          >
+            <FormField control={form.control} name="title" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Title</FormLabel>
+                <FormControl><Input {...field} /></FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <FormField control={form.control} name="body" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Content</FormLabel>
+                <FormControl>
+                  <Textarea rows={5} {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField control={form.control} name="isImportant" render={({ field }) => (
+                <FormItem className="flex items-center gap-3">
+                  <FormControl>
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                  </FormControl>
+                  <FormLabel className="!mt-0">Mark as Important</FormLabel>
+                </FormItem>
+              )} />
+              <FormField control={form.control} name="expiresAt" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Expires At (optional)</FormLabel>
+                  <FormControl><Input type="date" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+              <Button type="submit" disabled={isPending}>{isPending ? 'Saving...' : 'Save'}</Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function AnnouncementCard({
+  announcement,
+  onEdit,
+}: {
+  announcement: Announcement
+  onEdit: (a: Announcement) => void
+}) {
   const { mutate: deleteAnn } = useDeleteAnnouncement()
+  const now = new Date()
+  const isExpired = announcement.expiresAt ? new Date(announcement.expiresAt) < now : false
 
   return (
     <Card className={announcement.isImportant ? 'border-[var(--accent)]/40' : ''}>
@@ -118,6 +202,9 @@ function AnnouncementCard({ announcement }: { announcement: Announcement }) {
                 <Badge variant="accent" className="text-xs">
                   <AlertCircle className="h-3 w-3 mr-1" /> Important
                 </Badge>
+              )}
+              {isExpired && (
+                <Badge variant="secondary" className="text-xs">Expired</Badge>
               )}
               <h3 className="font-semibold text-[var(--text)]">{announcement.title}</h3>
             </div>
@@ -133,7 +220,12 @@ function AnnouncementCard({ announcement }: { announcement: Announcement }) {
             </div>
           </div>
           <div className="flex gap-1 shrink-0">
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => onEdit(announcement)}
+            >
               <Pencil className="h-3.5 w-3.5" />
             </Button>
             <Button
@@ -154,6 +246,7 @@ function AnnouncementCard({ announcement }: { announcement: Announcement }) {
 export function AnnouncementsPage() {
   const { data, isLoading } = useAnnouncementList()
   const announcements = data?.data ?? []
+  const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null)
 
   return (
     <div className="space-y-5">
@@ -177,7 +270,13 @@ export function AnnouncementsPage() {
             </Card>
           ))
         ) : announcements.length ? (
-          announcements.map((a) => <AnnouncementCard key={a.id} announcement={a} />)
+          announcements.map((a) => (
+            <AnnouncementCard
+              key={a.id}
+              announcement={a}
+              onEdit={setEditingAnnouncement}
+            />
+          ))
         ) : (
           <div className="text-center py-16 text-[var(--text-muted)]">
             <p className="font-medium">No announcements yet</p>
@@ -185,6 +284,13 @@ export function AnnouncementsPage() {
           </div>
         )}
       </div>
+
+      {editingAnnouncement && (
+        <EditAnnouncementDialog
+          announcement={editingAnnouncement}
+          onClose={() => setEditingAnnouncement(null)}
+        />
+      )}
     </div>
   )
 }

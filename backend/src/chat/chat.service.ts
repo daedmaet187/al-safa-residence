@@ -235,6 +235,19 @@ export class ChatService {
     return mapConversation(updated);
   }
 
+  async closeConversation(residentId: string, conversationId: string) {
+    const conv = await this.prisma.conversation.findUnique({ where: { id: conversationId } });
+    if (!conv) throw new NotFoundException('Conversation not found');
+    if (conv.residentId !== residentId) throw new ForbiddenException();
+    if (conv.status === ConversationStatus.CLOSED) return mapConversation(conv);
+
+    const updated = await this.prisma.conversation.update({
+      where: { id: conversationId },
+      data: { status: ConversationStatus.CLOSED, updatedAt: new Date() },
+    });
+    return mapConversation(updated);
+  }
+
   async adminMarkRead(conversationId: string) {
     const conversation = await this.prisma.conversation.findUnique({ where: { id: conversationId } });
     if (!conversation) throw new NotFoundException('Conversation not found');

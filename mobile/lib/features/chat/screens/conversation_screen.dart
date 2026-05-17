@@ -1,9 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/chat_provider.dart';
 import '../../../shared/models/conversation.dart';
+
+String _formatMessageTime(String isoString) {
+  final dt = DateTime.tryParse(isoString);
+  if (dt == null) return '';
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final messageDay = DateTime(dt.year, dt.month, dt.day);
+  if (messageDay == today) {
+    return DateFormat('h:mm a').format(dt);
+  }
+  return DateFormat('d MMM, h:mm a').format(dt);
+}
 
 class ConversationScreen extends ConsumerStatefulWidget {
   const ConversationScreen({super.key, required this.conversationId});
@@ -46,6 +59,39 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
         );
       }
     });
+  }
+
+  Future<void> _closeTicket(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Close Conversation'),
+        content: const Text('Mark this conversation as resolved?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await ref
+          .read(conversationDetailProvider(widget.conversationId).notifier)
+          .close();
+      if (context.mounted) context.pop();
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to close conversation')),
+        );
+      }
+    }
   }
 
   Future<void> _send() async {
@@ -95,6 +141,14 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
           loading: () => const Text('Chat'),
           error: (_, __) => const Text('Chat'),
         ),
+        actions: [
+          if (convAsync.valueOrNull?.status == 'open')
+            TextButton(
+              onPressed: () => _closeTicket(context, ref),
+              child: const Text('Close',
+                  style: TextStyle(color: Colors.white70)),
+            ),
+        ],
       ),
       body: convAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -152,9 +206,8 @@ class _MessageBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isResident = message.isFromResident;
-    final timeFmt = DateFormat('h:mm a');
     final time = message.createdAt.isNotEmpty
-        ? timeFmt.format(DateTime.tryParse(message.createdAt) ?? DateTime.now())
+        ? _formatMessageTime(message.createdAt)
         : '';
 
     return Padding(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/payments_provider.dart';
@@ -44,6 +45,7 @@ class PaymentHistoryScreen extends ConsumerWidget {
             itemBuilder: (context, i) {
               final bill = bills[i];
               return ListTile(
+                onTap: () => context.push('/home/payments/${bill.id}'),
                 contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16, vertical: 8),
                 leading: Container(

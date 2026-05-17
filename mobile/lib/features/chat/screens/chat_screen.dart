@@ -5,6 +5,17 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/chat_provider.dart';
 
+String _formatConvDate(String isoString) {
+  final dt = DateTime.tryParse(isoString);
+  if (dt == null) return '';
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final dtDay = DateTime(dt.year, dt.month, dt.day);
+  if (dtDay == today) return DateFormat('h:mm a').format(dt);
+  if (dt.year == now.year) return DateFormat('d MMM').format(dt);
+  return DateFormat('d MMM y').format(dt);
+}
+
 class ChatScreen extends ConsumerWidget {
   const ChatScreen({super.key});
 
@@ -76,7 +87,6 @@ class ChatScreen extends ConsumerWidget {
               final conv = conversations[i];
               final last = conv.lastMessage;
               final isClosed = conv.status == 'closed';
-              final dateFmt = DateFormat('MMM d');
 
               return InkWell(
                 onTap: () => context.push('/home/chat/${conv.id}'),
@@ -161,8 +171,7 @@ class ChatScreen extends ConsumerWidget {
                         children: [
                           if (conv.updatedAt.isNotEmpty)
                             Text(
-                              dateFmt.format(DateTime.tryParse(conv.updatedAt) ??
-                                  DateTime.now()),
+                              _formatConvDate(conv.updatedAt),
                               style: Theme.of(context).textTheme.labelSmall,
                             ),
                           const SizedBox(height: 4),

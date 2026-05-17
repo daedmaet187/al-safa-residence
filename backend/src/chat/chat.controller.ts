@@ -71,4 +71,11 @@ export class ChatController {
     const residentId = user.primaryUserId ?? user.id;
     return this.chatService.markRead(residentId, id);
   }
+
+  @Patch('conversations/:id/close')
+  @ApiOperation({ summary: 'Resident closes their own conversation' })
+  closeConversation(@User() user: any, @Param('id') id: string) {
+    const residentId = user.primaryUserId ?? user.id;
+    return this.chatService.closeConversation(residentId, id);
+  }
 }

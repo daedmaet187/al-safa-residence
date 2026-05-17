@@ -35,8 +35,11 @@ export class ResidentService {
     const [recentAnnouncements, activeGuestPasses, overdueBillsCount, openMaintenance] =
       await Promise.all([
         this.prisma.announcement.findMany({
-          where: { deletedAt: null },
-          orderBy: { publishedAt: 'desc' },
+          where: {
+            deletedAt: null,
+            OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+          },
+          orderBy: [{ isImportant: 'desc' }, { publishedAt: 'desc' }],
           take: 5,
         }),
         this.prisma.guestPass.count({

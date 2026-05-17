@@ -1,7 +1,18 @@
+import { useState } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
 import { MoreHorizontal, UserCheck, UserX, Pencil } from 'lucide-react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,9 +21,25 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { formatDate, getInitials } from '@/lib/utils'
 import type { Resident } from '@/types'
-import { useDeactivateResident } from './service'
+import { useDeactivateResident, useUpdateResident } from './service'
 
 const statusVariant: Record<string, 'success' | 'warning' | 'danger' | 'secondary'> = {
   active: 'success',
@@ -21,37 +48,145 @@ const statusVariant: Record<string, 'success' | 'warning' | 'danger' | 'secondar
   inactive: 'secondary',
 }
 
+const editResidentSchema = z.object({
+  name: z.string().min(2, 'Name is required'),
+  phone: z.string().regex(/^\+?\d{10,15}$/, 'Enter a valid phone number (10–15 digits)'),
+  status: z.enum(['active', 'inactive', 'suspended', 'pending']),
+})
+type EditResidentForm = z.infer<typeof editResidentSchema>
+
+function EditResidentDialog({
+  resident,
+  onClose,
+}: {
+  resident: Resident
+  onClose: () => void
+}) {
+  const { mutate, isPending } = useUpdateResident(resident.id)
+  const form = useForm<EditResidentForm>({
+    resolver: zodResolver(editResidentSchema),
+    defaultValues: {
+      name: resident.name ?? '',
+      phone: resident.phone ?? '',
+      status: (resident.status as EditResidentForm['status']) ?? 'active',
+    },
+  })
+
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Edit Resident</DialogTitle>
+        </DialogHeader>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit((v) =>
+              mutate(v as any, { onSuccess: onClose })
+            )}
+            className="space-y-4"
+          >
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Full Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Ahmad Al-Safa" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone</FormLabel>
+                  <FormControl>
+                    <Input placeholder="+9647700000000" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Status</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="suspended">Suspended</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isPending}>
+                {isPending ? 'Saving...' : 'Save'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 function ActionsCell({ resident }: { resident: Resident }) {
   const { mutate: updateStatus } = useDeactivateResident()
+  const [editing, setEditing] = useState(false)
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8">
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem>
-          <Pencil className="h-4 w-4" /> Edit
-        </DropdownMenuItem>
-        {resident.status === 'active' ? (
-          <DropdownMenuItem
-            className="text-[var(--danger)]"
-            onClick={() => updateStatus({ id: resident.id, status: 'suspended' })}
-          >
-            <UserX className="h-4 w-4" /> Suspend
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-8 w-8">
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => setEditing(true)}>
+            <Pencil className="h-4 w-4" /> Edit
           </DropdownMenuItem>
-        ) : (
-          <DropdownMenuItem
-            onClick={() => updateStatus({ id: resident.id, status: 'active' })}
-          >
-            <UserCheck className="h-4 w-4" /> Reactivate
-          </DropdownMenuItem>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+          {resident.status === 'active' ? (
+            <DropdownMenuItem
+              className="text-[var(--danger)]"
+              onClick={() => updateStatus({ id: resident.id, status: 'suspended' })}
+            >
+              <UserX className="h-4 w-4" /> Suspend
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem
+              onClick={() => updateStatus({ id: resident.id, status: 'active' })}
+            >
+              <UserCheck className="h-4 w-4" /> Reactivate
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+      {editing && (
+        <EditResidentDialog resident={resident} onClose={() => setEditing(false)} />
+      )}
+    </>
   )
 }
 
