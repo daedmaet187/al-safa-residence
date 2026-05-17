@@ -41,9 +41,16 @@ export class MaintenanceService {
     }
   }
 
+  async remove(id: string, userId: string, userRole: string) {
+    const request = await this.prisma.maintenanceRequest.findUnique({ where: { id } });
+    if (!request || request.deletedAt) throw new NotFoundException(`Maintenance request with ID ${id} not found`);
+    if (userRole === 'RESIDENT' && request.userId !== userId) throw new ForbiddenException('Access denied');
+    return this.prisma.maintenanceRequest.update({ where: { id }, data: { deletedAt: new Date() } });
+  }
+
   async findAll(userId: string, userRole: string, params?: { skip?: number; take?: number }) {
     const { skip = 0, take = 20 } = params || {};
-    const where: any = {};
+    const where: any = { deletedAt: null };
 
     if (userRole === 'RESIDENT') {
       where.userId = userId;
@@ -67,8 +74,8 @@ export class MaintenanceService {
   }
 
   async findOne(id: string, userId: string, userRole: string) {
-    const request = await this.prisma.maintenanceRequest.findUnique({
-      where: { id },
+    const request = await this.prisma.maintenanceRequest.findFirst({
+      where: { id, deletedAt: null },
       include: {
         user: { select: { id: true, name: true, phone: true } },
         unit: true,

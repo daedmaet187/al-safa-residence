@@ -59,7 +59,8 @@ export class UnitsController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get unit detail with specs and stats' })
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: 'Get unit detail with specs and stats (admin only)' })
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Unit detail' })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Unit not found' })

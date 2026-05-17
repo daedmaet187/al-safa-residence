@@ -56,8 +56,8 @@ enum Role {
 }
 
 model Unit {
-  id          String   @id @default(uuid())
-  number      String   @unique
+  id          String    @id @default(uuid())
+  number      String    @unique
   floor       Int
   building    String?
   type        String
@@ -65,9 +65,10 @@ model Unit {
   bedrooms    Int
   bathrooms   Int
   parkingSpot String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
 
   assignments     UnitAssignment[]
   maintenance     MaintenanceRequest[]
@@ -90,6 +91,7 @@ model UnitAssignment {
   unit Unit @relation(fields: [unitId], references: [id])
 
   @@unique([userId, unitId])
+  @@index([userId])
   @@map("unit_assignments")
 }
 
@@ -108,11 +110,14 @@ model MaintenanceRequest {
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
   resolvedAt        DateTime?
+  deletedAt         DateTime?
 
   user            User             @relation(fields: [userId], references: [id])
   unit            Unit             @relation(fields: [unitId], references: [id])
   householdMember HouseholdMember? @relation(fields: [householdMemberId], references: [id])
 
+  @@index([userId])
+  @@index([unitId])
   @@map("maintenance_requests")
 }
 
@@ -153,11 +158,14 @@ model Bill {
   description String?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
+  deletedAt   DateTime?
 
   payments Payment[]
   user     User      @relation(fields: [userId], references: [id])
   unit     Unit      @relation(fields: [unitId], references: [id])
 
+  @@index([userId])
+  @@index([unitId])
   @@map("bills")
 }
 
@@ -187,10 +195,13 @@ model Payment {
   reference String?
   paidAt    DateTime?
   createdAt DateTime      @default(now())
+  deletedAt DateTime?
 
   bill Bill @relation(fields: [billId], references: [id])
   user User @relation(fields: [userId], references: [id])
 
+  @@index([userId])
+  @@index([billId])
   @@map("payments")
 }
 
@@ -261,6 +272,7 @@ model GateLog {
 
   guestPass GuestPass @relation(fields: [guestPassId], references: [id])
 
+  @@index([guestPassId])
   @@map("gate_logs")
 }
 
@@ -273,6 +285,7 @@ model DeviceToken {
 
   user User @relation(fields: [userId], references: [id])
 
+  @@index([userId])
   @@map("device_tokens")
 }
 

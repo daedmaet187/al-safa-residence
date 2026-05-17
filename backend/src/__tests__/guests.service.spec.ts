@@ -1,6 +1,18 @@
+import * as crypto from 'crypto';
 import { Test, TestingModule } from '@nestjs/testing';
 import { GuestsService } from '../guests/guests.service';
 import { PrismaService } from '../prisma/prisma.service';
+
+const TEST_SECRET = 'test-jwt-secret';
+process.env.JWT_ACCESS_SECRET = TEST_SECRET;
+
+function signQr(uuid: string): string {
+  const sig = crypto.createHmac('sha256', TEST_SECRET).update(uuid).digest('hex');
+  return `${uuid}.${sig}`;
+}
+
+const VALID_UUID = 'valid-qr-uuid';
+const VALID_QR = signQr(VALID_UUID);
 
 const mockPrisma = {
   guestPass: {
@@ -23,7 +35,7 @@ const SCANNER_ID = 'guard-1';
 const basePass = {
   id: 'pass-1',
   userId: 'resident-1',
-  qrCode: 'valid-qr-uuid',
+  qrCode: VALID_QR,
   guestName: 'John Doe',
   guestPhone: '+9647001234567',
   purpose: 'Visit',
@@ -61,7 +73,7 @@ describe('GuestsService.scanQr', () => {
       status: 'ACTIVE',
     });
 
-    const result = await service.scanQr({ qrCode: 'valid-qr-uuid' }, SCANNER_ID);
+    const result = await service.scanQr({ qrCode: VALID_QR }, SCANNER_ID);
 
     expect(result.result).toBe('APPROVED');
     expect(mockPrisma.guestPass.update).toHaveBeenCalledWith(
@@ -77,7 +89,7 @@ describe('GuestsService.scanQr', () => {
       status: 'USED',
     });
 
-    const result = await service.scanQr({ qrCode: 'valid-qr-uuid' }, SCANNER_ID);
+    const result = await service.scanQr({ qrCode: VALID_QR }, SCANNER_ID);
 
     expect(result.result).toBe('DENIED');
     expect(result.reason).toMatch(/already been used/i);
@@ -89,7 +101,7 @@ describe('GuestsService.scanQr', () => {
       status: 'REVOKED',
     });
 
-    const result = await service.scanQr({ qrCode: 'valid-qr-uuid' }, SCANNER_ID);
+    const result = await service.scanQr({ qrCode: VALID_QR }, SCANNER_ID);
 
     expect(result.result).toBe('DENIED');
     expect(result.reason).toMatch(/revoked/i);
@@ -102,7 +114,7 @@ describe('GuestsService.scanQr', () => {
       validUntil: new Date(Date.now() - 1000),
     });
 
-    const result = await service.scanQr({ qrCode: 'valid-qr-uuid' }, SCANNER_ID);
+    const result = await service.scanQr({ qrCode: VALID_QR }, SCANNER_ID);
 
     expect(['DENIED', 'EXPIRED']).toContain(result.result);
     expect(mockPrisma.guestPass.update).toHaveBeenCalledWith(

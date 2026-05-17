@@ -25,7 +25,7 @@ export class UnitsService {
   }
 
   async findAll(userId?: string, userRole?: string) {
-    const where: any = { isActive: true };
+    const where: any = { isActive: true, deletedAt: null };
 
     if (userRole === 'RESIDENT' && userId) {
       where.assignments = { some: { userId, endDate: null } };
@@ -48,9 +48,15 @@ export class UnitsService {
     return { count, data };
   }
 
+  async remove(id: string) {
+    const unit = await this.prisma.unit.findFirst({ where: { id, deletedAt: null } });
+    if (!unit) throw new NotFoundException(`Unit with ID ${id} not found`);
+    return this.prisma.unit.update({ where: { id }, data: { deletedAt: new Date() } });
+  }
+
   async findOne(id: string) {
     const unit = await this.prisma.unit.findFirst({
-      where: { id, isActive: true },
+      where: { id, isActive: true, deletedAt: null },
       include: {
         assignments: {
           where: { endDate: null },

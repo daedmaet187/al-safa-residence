@@ -169,7 +169,9 @@ class SecurityAuthNotifier extends AsyncNotifier<bool> {
         throw Exception('This number is not a security guard account');
       }
       final token = resp.data['accessToken'] as String;
+      final refreshToken = resp.data['refreshToken'] as String?;
       await storage.setAuthToken(token);
+      if (refreshToken != null) await storage.setRefreshToken(refreshToken);
       await storage.setUserRole(role);
       return true;
     });

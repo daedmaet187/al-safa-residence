@@ -52,7 +52,8 @@ class _BiometricScreenState extends ConsumerState<BiometricScreen> {
     try {
       final canCheck = await _localAuth.canCheckBiometrics;
       if (!canCheck) {
-        setState(() { _isLoading = false; _showPinFallback = true; });
+        // No biometric hardware — fall back to credential re-entry
+        if (mounted) context.go('/login');
         return;
       }
       final authenticated = await _localAuth.authenticate(
@@ -65,10 +66,13 @@ class _BiometricScreenState extends ConsumerState<BiometricScreen> {
       if (authenticated && mounted) {
         await _goHome();
       } else if (mounted) {
-        setState(() { _isLoading = false; _showPinFallback = true; });
+        // Biometric failed or cancelled — redirect to credential re-entry
+        context.go('/login');
       }
     } catch (_) {
-      if (mounted) setState(() { _isLoading = false; _showPinFallback = true; });
+      if (mounted) context.go('/login');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -162,7 +166,7 @@ class _BiometricScreenState extends ConsumerState<BiometricScreen> {
               GoldButton(label: 'biometric.use_biometric'.tr(), icon: Icons.fingerprint_rounded, isLoading: _isLoading, onPressed: _verify),
               const SizedBox(height: 12),
               TextButton(
-                onPressed: () => setState(() => _showPinFallback = true),
+                onPressed: () => context.go('/login'),
                 child: Text('biometric.use_pin_instead'.tr()),
               ),
             ],

@@ -13,6 +13,7 @@ import {
   ApiOperation,
   ApiResponse,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RefreshDto } from './dto/refresh.dto';
@@ -44,6 +45,7 @@ export class AuthController {
   }
 
   @Post('login')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @ApiOperation({ summary: 'Login with email and password' })
   @ApiResponse({ status: HttpStatus.OK, type: AuthResponseDto })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Invalid credentials' })
@@ -52,6 +54,7 @@ export class AuthController {
   }
 
   @Post('refresh')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @ApiOperation({ summary: 'Refresh access token' })
   @ApiResponse({ status: HttpStatus.OK, description: 'New access and refresh tokens' })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Invalid refresh token' })

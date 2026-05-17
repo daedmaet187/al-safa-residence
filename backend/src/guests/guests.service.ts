@@ -4,6 +4,7 @@ import {
   BadRequestException,
   ForbiddenException,
 } from '@nestjs/common';
+import * as crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 import * as QRCode from 'qrcode';
 import { GuestPassStatus } from '@prisma/client';
@@ -15,8 +16,26 @@ import { ScanQrDto } from './dto/scan-qr.dto';
 export class GuestsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private signQr(uuid: string): string {
+    const secret = process.env.JWT_ACCESS_SECRET ?? '';
+    const sig = crypto.createHmac('sha256', secret).update(uuid).digest('hex');
+    return `${uuid}.${sig}`;
+  }
+
+  private verifyQr(qrCode: string): string | null {
+    const dotIndex = qrCode.lastIndexOf('.');
+    if (dotIndex === -1) return null;
+    const uuid = qrCode.slice(0, dotIndex);
+    const sig = qrCode.slice(dotIndex + 1);
+    const secret = process.env.JWT_ACCESS_SECRET ?? '';
+    const expected = crypto.createHmac('sha256', secret).update(uuid).digest('hex');
+    if (!crypto.timingSafeEqual(Buffer.from(sig, 'hex'), Buffer.from(expected, 'hex'))) return null;
+    return uuid;
+  }
+
   async create(dto: CreateGuestPassDto, userId: string) {
-    const qrCode = uuidv4();
+    const uuid = uuidv4();
+    const qrCode = this.signQr(uuid);
 
     const qrDataUrl = await QRCode.toDataURL(qrCode);
 
@@ -78,6 +97,11 @@ export class GuestsService {
   }
 
   scanQr = async (dto: ScanQrDto, scannedById: string) => {
+    const uuid = this.verifyQr(dto.qrCode);
+    if (!uuid) {
+      return { result: 'DENIED', reason: 'Invalid QR code' };
+    }
+
     const pass = await this.prisma.guestPass.findUnique({
       where: { qrCode: dto.qrCode },
       include: {

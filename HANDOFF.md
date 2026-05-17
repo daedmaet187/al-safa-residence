@@ -99,19 +99,9 @@ Admin panel: https://safa-admin.stuff187.com
 
 ---
 
-## Known Limitations / Tech Debt (11 Warnings — deferred)
+## Known Limitations / Tech Debt
 
-1. No rate limiting on auth endpoints (add `@nestjs/throttler`)
-2. Admin login doesn't validate role claim client-side (WARN-002)
-3. Security guard has no refresh token flow (WARN-003)
-4. OTP resend is a stub; no brute-force lockout (WARN-004)
-5. Missing DB indexes on FK columns (WARN-005)
-6. Guest QR is unsigned UUID (consider HMAC signing, WARN-006)
-7. Soft delete inconsistent across models (WARN-007)
-8. No global HTTP exception filter (WARN-008)
-9. Biometric fallback silently skips auth (WARN-009)
-10. GET /units/:id exposes unit PII to all users (WARN-010)
-11. Refresh token DB expiry hardcoded to 7 days (WARN-011)
+All 11 pre-launch warnings resolved on 2026-05-17. See `plans/warnings-fix.results.md` for details.
 
 ---
 

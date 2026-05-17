@@ -377,6 +377,14 @@ export class AuthService {
     return '+964' + p;
   }
 
+  private parseExpiryMs(expiry: string): number {
+    const match = expiry.match(/^(\d+)([smhd])$/);
+    if (!match) return 7 * 86400000;
+    const n = parseInt(match[1], 10);
+    const multipliers: Record<string, number> = { s: 1000, m: 60000, h: 3600000, d: 86400000 };
+    return n * (multipliers[match[2]] ?? 86400000);
+  }
+
   private async generateTokens(
     userId: string,
     emailOrPhone: string,
@@ -403,13 +411,13 @@ export class AuthService {
       expiresIn: this.configService.get<string>('jwt.accessExpiry'),
     });
 
+    const refreshExpiry = this.configService.get<string>('jwt.refreshExpiry') ?? '7d';
     const refreshToken = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('jwt.refreshSecret'),
-      expiresIn: this.configService.get<string>('jwt.refreshExpiry'),
+      expiresIn: refreshExpiry,
     });
 
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
+    const expiresAt = new Date(Date.now() + this.parseExpiryMs(refreshExpiry));
 
     await this.prisma.refreshToken.create({
       data: { userId, token: refreshToken, expiresAt },

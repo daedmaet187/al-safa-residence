@@ -30,9 +30,21 @@ export class PaymentsService {
     });
   }
 
+  async removeBill(id: string) {
+    const bill = await this.prisma.bill.findFirst({ where: { id, deletedAt: null } });
+    if (!bill) throw new NotFoundException(`Bill with ID ${id} not found`);
+    return this.prisma.bill.update({ where: { id }, data: { deletedAt: new Date() } });
+  }
+
+  async removePayment(id: string) {
+    const payment = await this.prisma.payment.findFirst({ where: { id, deletedAt: null } });
+    if (!payment) throw new NotFoundException(`Payment with ID ${id} not found`);
+    return this.prisma.payment.update({ where: { id }, data: { deletedAt: new Date() } });
+  }
+
   async findBills(userId: string, userRole: string, params?: { skip?: number; take?: number }) {
     const { skip = 0, take = 20 } = params || {};
-    const where: any = {};
+    const where: any = { deletedAt: null };
 
     if (userRole === 'RESIDENT') {
       where.userId = userId;
@@ -109,7 +121,7 @@ export class PaymentsService {
 
   async findPaymentHistory(userId: string, userRole: string, params?: { skip?: number; take?: number }) {
     const { skip = 0, take = 20 } = params || {};
-    const where: any = {};
+    const where: any = { deletedAt: null };
 
     if (userRole === 'RESIDENT') {
       where.userId = userId;
