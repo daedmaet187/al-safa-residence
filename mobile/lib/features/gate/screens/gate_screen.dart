@@ -279,8 +279,7 @@ class _GuestPassCard extends ConsumerWidget {
                   ],
                 ),
               ),
-              StatusChip(
-                  status: pass.isActive ? 'active' : pass.status),
+              StatusChip(status: pass.displayStatus),
             ],
           ),
         ),

@@ -104,7 +104,7 @@ class ProfileScreen extends ConsumerWidget {
           _SectionTile(
             icon: Icons.badge_outlined,
             title: 'profile.id_documents'.tr(),
-            onTap: () {},
+            onTap: () => context.push('/home/id-documents'),
           ),
           Consumer(builder: (ctx, ref, _) {
             final authState = ref.watch(authProvider).value;

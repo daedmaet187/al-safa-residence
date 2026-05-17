@@ -293,15 +293,31 @@ export class AdminService {
   async markBillPaid(id: string) {
     const bill = await this.prisma.bill.findUnique({ where: { id } });
     if (!bill) throw new NotFoundException(`Bill ${id} not found`);
+    if (bill.status === BillStatus.PAID) return bill;
 
-    return this.prisma.bill.update({
-      where: { id },
-      data: { status: BillStatus.PAID },
-      include: {
-        user: { select: { id: true, name: true } },
-        unit: { select: { id: true, number: true, building: true } },
-      },
-    });
+    return this.prisma.$transaction([
+      this.prisma.payment.create({
+        data: {
+          billId: id,
+          userId: bill.userId,
+          unitId: bill.unitId,
+          amount: bill.amount,
+          currency: bill.currency,
+          method: 'BANK_TRANSFER' as any,
+          status: 'COMPLETED',
+          paidAt: new Date(),
+          reference: `admin-manual-${id.slice(0, 8)}`,
+        },
+      }),
+      this.prisma.bill.update({
+        where: { id },
+        data: { status: BillStatus.PAID },
+        include: {
+          user: { select: { id: true, name: true } },
+          unit: { select: { id: true, number: true, building: true } },
+        },
+      }),
+    ]).then(([, updatedBill]) => updatedBill);
   }
 
   // ── Payments ───────────────────────────────────────────────────────────────

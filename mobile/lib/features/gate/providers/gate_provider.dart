@@ -41,6 +41,11 @@ class GuestPass {
 
   bool get isActive =>
       status == 'active' && DateTime.now().isBefore(validUntil);
+
+  String get displayStatus {
+    if (status == 'active' && DateTime.now().isAfter(validUntil)) return 'expired';
+    return status;
+  }
 }
 
 // My resident QR

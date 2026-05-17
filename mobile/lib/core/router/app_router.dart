@@ -24,6 +24,7 @@ import '../../features/community/screens/announcement_detail_screen.dart';
 import '../../features/unit/screens/unit_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
 import '../../features/profile/screens/support_screen.dart';
+import '../../features/profile/screens/id_documents_screen.dart';
 import '../../features/profile/household_members/household_members_screen.dart';
 import '../../features/profile/household_members/member_detail_screen.dart';
 import '../../features/security/screens/security_home_screen.dart';
@@ -191,6 +192,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/home/unit-switcher',
         builder: (context, state) => const MultiUnitScreen(),
+      ),
+
+      // ── ID Documents ─────────────────────────────────────────────────────────
+      GoRoute(
+        path: '/home/id-documents',
+        builder: (context, state) => const IdDocumentsScreen(),
       ),
 
       // ── Household Members management (primary resident only) ─────────────────

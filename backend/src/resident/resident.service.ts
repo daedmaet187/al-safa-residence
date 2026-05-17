@@ -27,6 +27,11 @@ export class ResidentService {
   async getDashboardSummary(userId: string) {
     const now = new Date();
 
+    await this.prisma.guestPass.updateMany({
+      where: { userId, status: 'ACTIVE', validUntil: { lt: now } },
+      data: { status: 'EXPIRED' },
+    });
+
     const [recentAnnouncements, activeGuestPasses, overdueBillsCount, openMaintenance] =
       await Promise.all([
         this.prisma.announcement.findMany({
@@ -174,6 +179,12 @@ export class ResidentService {
   }
 
   async getGuestPasses(userId: string) {
+    const now = new Date();
+    await this.prisma.guestPass.updateMany({
+      where: { userId, status: 'ACTIVE', validUntil: { lt: now } },
+      data: { status: 'EXPIRED' },
+    });
+
     const passes = await this.prisma.guestPass.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },

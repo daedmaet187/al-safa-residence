@@ -15,6 +15,8 @@ import { formatDate, formatCurrency } from '@/lib/utils'
 import type { Bill, Payment } from '@/types'
 import { useBillList, usePaymentList, useOverdueBills, useCreateBill, useMarkBillPaid } from './-components/service'
 import { createBillSchema, type CreateBillValues } from './-schema'
+import { useResidentList } from '@/app/residents/-components/list/service'
+import { useUnitList } from '@/app/units/-components/list/service'
 
 const billStatusVariant: Record<string, any> = {
   pending: 'warning',
@@ -26,9 +28,13 @@ const billStatusVariant: Record<string, any> = {
 function CreateBillButton() {
   const [open, setOpen] = useState(false)
   const { mutate, isPending } = useCreateBill()
+  const { data: residentsData } = useResidentList({ take: 200 })
+  const { data: unitsData } = useUnitList({ take: 100 })
+  const residents = residentsData?.data ?? []
+  const units = unitsData?.data ?? []
   const form = useForm<CreateBillValues>({
     resolver: zodResolver(createBillSchema),
-    defaultValues: { residentId: '', unitId: '', type: 'MONTHLY_FEE', amount: 0, dueDate: '' },
+    defaultValues: { userId: '', unitId: '', type: 'MONTHLY_FEE', amount: 0, dueDate: '' },
   })
 
   return (
@@ -41,17 +47,31 @@ function CreateBillButton() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit((v) => mutate(v, { onSuccess: () => { setOpen(false); form.reset() } }))} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <FormField control={form.control} name="residentId" render={({ field }) => (
+              <FormField control={form.control} name="userId" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Resident ID</FormLabel>
-                  <FormControl><Input placeholder="resident-uuid" {...field} /></FormControl>
+                  <FormLabel>Resident <span className="text-[var(--danger)]">*</span></FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl><SelectTrigger><SelectValue placeholder="Select resident" /></SelectTrigger></FormControl>
+                    <SelectContent>
+                      {residents.map((r: any) => (
+                        <SelectItem key={r.id} value={r.id}>{r.name} — {r.phone}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )} />
               <FormField control={form.control} name="unitId" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Unit ID</FormLabel>
-                  <FormControl><Input placeholder="unit-uuid" {...field} /></FormControl>
+                  <FormLabel>Unit <span className="text-[var(--danger)]">*</span></FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl><SelectTrigger><SelectValue placeholder="Select unit" /></SelectTrigger></FormControl>
+                    <SelectContent>
+                      {units.map((u: any) => (
+                        <SelectItem key={u.id} value={u.id}>{u.building ? `${u.building} — ` : ''}Unit {u.number}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )} />
